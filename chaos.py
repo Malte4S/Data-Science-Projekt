@@ -1,1 +1,1 @@
-Malte = 3
+Malte = 2
