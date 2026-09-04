@@ -133,4 +133,8 @@ def execute_fast_pipeline():
     use_container_width=True
 )
 
+if not all([tech, weather, timeframe]):
+    st.info("Please select an option for Technology, Weather Variable, and Timeframe to display the chart.")
+    st.stop()
+
 execute_fast_pipeline()
