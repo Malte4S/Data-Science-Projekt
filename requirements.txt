@@ -1,5 +1,4 @@
-pandas                    	==2.3.2
-matplotlib                	==3.10.6
-matplotlib-inline         	==0.1.7
-numpy                     	==2.0.1
-pip                       	==25.2
+matplotlib==3.10.6
+matplotlib-inline==0.1.7
+numpy==2.0.1
+pip==25.2
