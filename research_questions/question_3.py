@@ -15,7 +15,7 @@ st.write("How is renewable electricity generation associated with regional meteo
 
 st.subheader("Context")
 st.markdown(
-    "This research question concerns itself with the relationship between renewable electricity generation and regional meteorological condition in Northern and Southern European Countries, which were aggregated into said regions based on their geographical location "
+    "This research question concerns itself with the relationship between renewable electricity generation and regional meteorological condition in Northern and Southern European Countries, which were aggregated into said regions based on their geographical location ")
 
 st.subheader("Interactive Visualizations")
 st.markdown(
