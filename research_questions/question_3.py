@@ -150,23 +150,34 @@ if all([method,tech, weather, timeframe]):
                     hoverinfo='skip'
                 ))
         elif method == "Spearman":
-            if n_samples >= 4:
-                res_s = stats.spearmanr(x, y)
-                rho = res_s.statistic
-                ci_low, ci_high = calculate_spearman_ci(rho, n_samples)
-                p_val_str = "<0.001" if res_s.pvalue < 0.001 else f"{res_s.pvalue:.3f}"
-                
-                label_text = (f"<b>{r} (N={n_samples})</b><br>"
-                              f"ρ = {rho:.2f} (p {p_val_str})<br>"
-                              f"95% CI: [{ci_low:.2f}, {ci_high:.2f}]")
-                
-                fig.add_trace(go.Scatter(
-                    x=[None], y=[None],
-                    mode='lines',
-                    line=dict(color=colors.get(r, 'gray'), dash='dash', width=3),
-                    name=label_text,
-                    hoverinfo='skip'
-                ))
+                    if n_samples >= 4:
+                        res_s = stats.spearmanr(x, y)
+                        rho = res_s.statistic
+                        ci_low, ci_high = calculate_spearman_ci(rho, n_samples)
+                        p_val_str = "<0.001" if res_s.pvalue < 0.001 else f"{res_s.pvalue:.3f}"
+                        
+                        label_text = (f"<b>{r} (N={n_samples})</b><br>"
+                                      f"ρ = {rho:.2f} (p {p_val_str})<br>"
+                                      f"95% CI: [{ci_low:.2f}, {ci_high:.2f}]")
+                        
+                        # 1. Sort the data sequentially so the smoothing line draws cleanly left-to-right
+                        sorted_indices = np.argsort(x)
+                        x_sorted = x[sorted_indices]
+                        y_sorted = y[sorted_indices]
+        
+                        # 2. Calculate the LOWESS curve (frac=0.3 means it evaluates 30% of the data at a time for smoothness)
+                        lowess = sm.nonparametric.lowess(y_sorted, x_sorted, frac=0.3)
+                        x_lowess = lowess[:, 0]
+                        y_lowess = lowess[:, 1]
+        
+                        # 3. Draw the curving LOWESS trendline
+                        fig.add_trace(go.Scatter(
+                            x=x_lowess, y=y_lowess,
+                            mode='lines',
+                            line=dict(color=colors.get(r, 'gray'), width=3),
+                            name=label_text,
+                            hoverinfo='skip'
+                        ))
 
     # Graph Formatting
     fig.update_layout(
