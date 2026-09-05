@@ -15,17 +15,15 @@ st.write("How is renewable electricity generation associated with regional meteo
 
 st.subheader("Context")
 st.markdown(
-    "This research question concerns itself with the relationship between renewable electricity generation and regional meteorological condition in Northern and Southern European Countries, which were aggregated into said regions based on their geographical location. The analysis was conducted using a Pearson correlation coefficient. "
-    "Another approach with the Spearman correlation coefficient was also conducted for comparison, to uncover potential nonlinear relationships, though that did not yield any significant differences in results, which is why the Pearson correlation coefficient was chosen as the primary method of analysis.")
+    "This research question concerns itself with the relationship between renewable electricity generation and regional meteorological condition in Northern and Southern European Countries, which were aggregated into said regions based on their geographical location "
 
 st.subheader("Interactive Visualizations")
 st.markdown(
-    "Each dot represents, depending on which was selected, a day or month in the 2023-2025 period, with the x-axis representing the meteorological condition and the y-axis representing the renewable electricity generation. The dashed line represents the linear regression line. **Hover over the points to see the specific period and exact values.**")
+    "Each dot represents a day in the 2023-2025 period, with the x-axis representing the meteorological condition and the y-axis representing the renewable electricity generation. The dashed line represents the linear regression line. **Hover over the points to see the specific period and exact values.**")
 
 method = st.segmented_control("Select the Correlation Method", ["Pearson", "Spearman"], default="Pearson")
 tech = st.segmented_control("Select the Technology", ['Solar', 'Wind', 'Hydro', 'Bioenergy'], default='Solar')
-weather = st.segmented_control("Select the Weather Variable", ['Shortwave_Radiation_Sum', 'Wind_Speed_100m', 'Wind_Speed_100m_Cubed', 'Wind_Gusts_10m_Max', 'Temperature_2m_Max', 'Apparent_Temperature_Min', 'Precipitation_Sum', 'Snow_Depth'], default='Shortwave_Radiation_Sum')
-timeframe = st.segmented_control("Select the Timeframe", ["Daily", "Monthly"], default="Monthly")
+weather = st.segmented_control("Select the Weather Variable", ['Shortwave_Radiation_Sum', 'Wind_Speed_100m', 'Wind_Gusts_10m_Max', 'Temperature_2m_Max', 'Apparent_Temperature_Min', 'Precipitation_Sum', 'Snow_Depth'], default='Shortwave_Radiation_Sum')
 seasons = st.segmented_control("Filter by Season", ['Spring', 'Summer', 'Autumn', 'Winter'], selection_mode="multi", default=[])
 
 GEN_FILE = "./data/Q3_Data/European_Daily_Generation_2023_2025.csv"
@@ -33,7 +31,7 @@ CAP_FILE = "./data/Q3_Data/European_Validated_Capacity_2023_2025.csv"
 WEATHER_FILE = "./data/Q3_Data/Regional_Weighted_Weather_2023_2025.csv"
 
 # AI assisted code from here on.
-if all([method,tech, weather, timeframe]):
+if all([method,tech, weather]):
 
     def calculate_spearman_ci(rho, n):
         if abs(rho) == 1.0:
@@ -62,7 +60,7 @@ if all([method,tech, weather, timeframe]):
     merged['Daily_Potential_MWh'] = merged['Capacity_MW'] * 24
 
     # 3. Dynamic Date Slicing & Single Aggregation
-    slice_len = 7 if timeframe == 'Monthly' else 10
+    slice_len = 10
     merged['Period'] = merged['Date'].str[:slice_len]
     weather_df['Period'] = weather_df['Date'].str[:slice_len]
 
@@ -95,9 +93,9 @@ if all([method,tech, weather, timeframe]):
     clean_var_name = weather.replace('_', ' ').title()
     
     # Extract loop invariants
-    dot_size = 5 if timeframe == 'Daily' else 10
-    dot_alpha = 0.5 if timeframe == 'Daily' else 0.8
-    line_width = 0 if timeframe == 'Daily' else 1
+    dot_size = 5 
+    dot_alpha = 0.5 
+    line_width = 0 
     
     fig = go.Figure()
 
@@ -184,7 +182,7 @@ if all([method,tech, weather, timeframe]):
     fig.update_layout(
         height=700,
         title=dict(
-            text=f"<b>{method} Correlation: {timeframe} Capacity Factor vs. {clean_var_name} ({tech})</b>",
+            text=f"<b>{method} Correlation: Daily Capacity Factor vs. {clean_var_name} ({tech})</b>",
             font=dict(size=20)
         ),
         xaxis_title=dict(text=f"Average {clean_var_name}", font=dict(size=14)),
@@ -211,4 +209,4 @@ if all([method,tech, weather, timeframe]):
     st.plotly_chart(fig, use_container_width=True)
 
 else:
-    st.info("Please select a Correlation Method, Technology, Weather Variable, and Timeframe to display the analysis.")
+    st.info("Please select a Correlation Method, Technology, and Weather Variable to display the analysis.")
