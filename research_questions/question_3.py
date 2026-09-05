@@ -21,16 +21,29 @@ st.subheader("Interactive Visualizations")
 st.markdown(
     "Each dot represents, depending on which was selected, a day or month in the 2023-2025 period, with the x-axis representing the meteorological condition and the y-axis representing the renewable electricity generation. The dashed line represents the linear regression line. **Hover over the points to see the specific period and exact values.**")
 
-tech = st.segmented_control("Technology", ['Solar', 'Wind', 'Hydro', 'Bioenergy'], default='Solar')
-weather = st.segmented_control("Weather Variable", ['Shortwave_Radiation_Sum', 'Wind_Speed_100m', 'Wind_Speed_100m_Cubed', 'Wind_Gusts_10m_Max', 'Temperature_2m_Max', 'Apparent_Temperature_Min', 'Precipitation_Sum', 'Snow_Depth'], default='Shortwave_Radiation_Sum')
-timeframe = st.segmented_control("timeframe", ["Daily", "Monthly"], default="Monthly")
+method = st.segmented_control("Select the Correlation Method", ["Pearson", "Spearman"], default="Pearson")
+tech = st.segmented_control("Select the Technology", ['Solar', 'Wind', 'Hydro', 'Bioenergy'], default='Solar')
+weather = st.segmented_control("Select the Weather Variable", ['Shortwave_Radiation_Sum', 'Wind_Speed_100m', 'Wind_Speed_100m_Cubed', 'Wind_Gusts_10m_Max', 'Temperature_2m_Max', 'Apparent_Temperature_Min', 'Precipitation_Sum', 'Snow_Depth'], default='Shortwave_Radiation_Sum')
+timeframe = st.segmented_control("Select the Timeframe", ["Daily", "Monthly"], default="Monthly")
+seasons = st.segmented_control("Filter by Season", ['Spring', 'Summer', 'Autumn', 'Winter'], selection_mode="multi", default=[])
 
 GEN_FILE = "./data/Q3_Data/European_Daily_Generation_2023_2025.csv"
 CAP_FILE = "./data/Q3_Data/European_Validated_Capacity_2023_2025.csv"
 WEATHER_FILE = "./data/Q3_Data/Regional_Weighted_Weather_2023_2025.csv"
 
 # AI assisted code from here on.
-if all([tech, weather, timeframe]):
+if all([method,tech, weather, timeframe]):
+
+    def calculate_spearman_ci(rho, n):
+        if abs(rho) == 1.0:
+            return rho, rho
+        z = np.arctanh(rho)
+        se = 1 / np.sqrt(n - 3)
+        z_crit = stats.norm.ppf(0.975)
+        ci_low = np.tanh(z - z_crit * se)
+        ci_high = np.tanh(z + z_crit * se)
+        return ci_low, ci_high
+
     # 1. Targeted File Loading
     gen_cols = ['Region', 'Country', 'Date', tech]
     cap_cols = ['Region', 'Country', 'Year', tech]
@@ -57,6 +70,24 @@ if all([tech, weather, timeframe]):
 
     final_weather = weather_df.groupby(['Region', 'Period'])[[weather]].mean().reset_index()
     final_df = pd.merge(final_gen, final_weather, on=['Region', 'Period'])
+
+# --- INSERT SEASONAL LOGIC HERE ---
+    # 1. Extract the numerical month (characters 5 and 6) from 'YYYY-MM' or 'YYYY-MM-DD'
+    final_df['Month_Num'] = final_df['Period'].str[5:7].astype(int)
+    
+    # 2. Map the month integers to standard meteorological seasons
+    def map_season(m):
+        if m in [3, 4, 5]: return 'Spring'
+        elif m in [6, 7, 8]: return 'Summer'
+        elif m in [9, 10, 11]: return 'Autumn'
+        else: return 'Winter'
+        
+    final_df['Season'] = final_df['Month_Num'].apply(map_season)
+    
+    # 3. Filter the dataframe if the user has clicked any buttons
+    if seasons:
+        final_df = final_df[final_df['Season'].isin(seasons)]
+    # --- END SEASONAL LOGIC ---
 
     # 4. Visualization Setup
     colors = {'Northern Europe': '#1f77b4', 'Southern Europe': '#ff7f0e'}
@@ -97,32 +128,51 @@ if all([tech, weather, timeframe]):
             showlegend=False
         ))
         
-        if n_samples >= 3:
-            slope, intercept, _, _, _ = stats.linregress(x, y)
-            x_line = np.array([x.min(), x.max()])
-            y_line = slope * x_line + intercept
-            
-            res_p = stats.pearsonr(x, y)
-            ci_p = res_p.confidence_interval(confidence_level=0.95)
-            p_val_str = "<0.001" if res_p.pvalue < 0.001 else f"{res_p.pvalue:.3f}"
-            
-            label_text = (f"<b>{r} (N={n_samples})</b><br>"
-                          f"r = {res_p.statistic:.2f} (p {p_val_str})<br>"
-                          f"95% CI: [{ci_p.low:.2f}, {ci_p.high:.2f}]")
-            
-            fig.add_trace(go.Scatter(
-                x=x_line, y=y_line,
-                mode='lines',
-                line=dict(color=colors.get(r, 'gray'), dash='dash', width=3),
-                name=label_text,
-                hoverinfo='skip'
-            ))
+        if method == "Pearson":
+            if n_samples >= 3:
+                slope, intercept, _, _, _ = stats.linregress(x, y)
+                x_line = np.array([x.min(), x.max()])
+                y_line = slope * x_line + intercept
+                
+                res_p = stats.pearsonr(x, y)
+                ci_p = res_p.confidence_interval(confidence_level=0.95)
+                p_val_str = "<0.001" if res_p.pvalue < 0.001 else f"{res_p.pvalue:.3f}"
+                
+                label_text = (f"<b>{r} (N={n_samples})</b><br>"
+                              f"r = {res_p.statistic:.2f} (p {p_val_str})<br>"
+                              f"95% CI: [{ci_p.low:.2f}, {ci_p.high:.2f}]")
+                
+                fig.add_trace(go.Scatter(
+                    x=x_line, y=y_line,
+                    mode='lines',
+                    line=dict(color=colors.get(r, 'gray'), dash='dash', width=3),
+                    name=label_text,
+                    hoverinfo='skip'
+                ))
+        elif method == "Spearman":
+            if n_samples >= 4:
+                res_s = stats.spearmanr(x, y)
+                rho = res_s.statistic
+                ci_low, ci_high = calculate_spearman_ci(rho, n_samples)
+                p_val_str = "<0.001" if res_s.pvalue < 0.001 else f"{res_s.pvalue:.3f}"
+                
+                label_text = (f"<b>{r} (N={n_samples})</b><br>"
+                              f"ρ = {rho:.2f} (p {p_val_str})<br>"
+                              f"95% CI: [{ci_low:.2f}, {ci_high:.2f}]")
+                
+                fig.add_trace(go.Scatter(
+                    x=[None], y=[None],
+                    mode='lines',
+                    line=dict(color=colors.get(r, 'gray'), dash='dash', width=3),
+                    name=label_text,
+                    hoverinfo='skip'
+                ))
 
     # Graph Formatting
     fig.update_layout(
         height=700,
         title=dict(
-            text=f"<b>Pearson Correlation: {timeframe} Capacity Factor vs. {clean_var_name} ({tech})</b>",
+            text=f"<b>{method} Correlation: {timeframe} Capacity Factor vs. {clean_var_name} ({tech})</b>",
             font=dict(size=20)
         ),
         xaxis_title=dict(text=f"Average {clean_var_name}", font=dict(size=14)),
@@ -130,7 +180,7 @@ if all([tech, weather, timeframe]):
         template="plotly_white",
         hovermode="closest",
         legend=dict(
-            title=dict(text="<b>Region & Pearson Stats</b>"),
+            title=dict(text=f"<b>Region & {method} Stats</b>"),
             yanchor="top",
             y=0.98,
             xanchor="left",
@@ -149,4 +199,4 @@ if all([tech, weather, timeframe]):
     st.plotly_chart(fig, use_container_width=True)
 
 else:
-    st.info("Please select a Technology, Weather Variable, and Timeframe to display the analysis.")
+    st.info("Please select a Correlation Method, Technology, Weather Variable, and Timeframe to display the analysis.")
