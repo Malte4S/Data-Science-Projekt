@@ -4,3 +4,4 @@ numpy==2.0.1
 pip==25.2
 plotly==6.3.0
 scipy
+statsmodels
