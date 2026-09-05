@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import scipy.stats as stats
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 
 st.set_page_config(
     page_title="Research Question 3",
@@ -15,33 +15,30 @@ st.write("How is renewable electricity generation associated with regional meteo
 st.subheader("Context")
 st.markdown(
     "This research question concerns itself with the relationship between renewable electricity generation and regional meteorological condition in Northern and Southern European Countries, which were aggregated into said regions based on their geographical location. The analysis was conducted using a Pearson correlation coefficient. "
-    "Another approach with the Spearman correlation coefficient was also conducted for comparison, to uncover potential nonlinear relationships, though that did not yield any significant differences in results, which is why the Pearson correlation coefficient was chosen as the primary method of analysis."
+    "Another approach with the Spearman correlation coefficient was also conducted for comparison, to uncover potential nonlinear relationships, though that did not yield any significant differences in results."
 )
 
 st.subheader("Interactive Visualizations")
 st.markdown(
-    "Each dot represents, depending on which was selected, a day or month in the 2023-2025 period, with the x-axis representing the meteorological condition and the y-axis representing the renewable electricity generation. The dashed line represents the linear regression line."
+    "Each dot represents, depending on which was selected, a day or month in the 2023-2025 period, with the x-axis representing the meteorological condition and the y-axis representing the renewable electricity generation. The dashed line represents the linear regression line. **Hover over the points to see the specific period and exact values.**"
 )
 
 tech = st.segmented_control("Technology", ['Solar', 'Wind', 'Hydro', 'Bioenergy'], default='Solar')
 weather = st.segmented_control("Weather Variable", ['Shortwave_Radiation_Sum', 'Wind_Speed_100m', 'Wind_Speed_100m_Cubed', 'Wind_Gusts_10m_Max', 'Temperature_2m_Max', 'Apparent_Temperature_Min', 'Precipitation_Sum', 'Snow_Depth'], default='Temperature_2m_Max')
 timeframe = st.segmented_control("Timeframe", ["Daily", "Monthly"], default="Monthly")
 
-
-# AI-assisted code from here on, used to visualize the Pearson correlation coefficient.
 TARGET_TECH = tech
 TARGET_WEATHER = weather
 TIMEFRAME = timeframe
 
-# ==========================================
-# SYSTEM CONFIGURATION
-# ==========================================
 GEN_FILE = "./data/Q3_Data/European_Daily_Generation_2023_2025.csv"
 CAP_FILE = "./data/Q3_Data/European_Validated_Capacity_2023_2025.csv"
 WEATHER_FILE = "./data/Q3_Data/Regional_Weighted_Weather_2023_2025.csv"
 
+# AI assisted code from here on.
+
 def execute_fast_pipeline():
-    # 1. Targeted File Loading (Ignore unnecessary columns on read)
+    # 1. Targeted File Loading
     gen_cols = ['Region', 'Country', 'Date', TARGET_TECH]
     cap_cols = ['Region', 'Country', 'Year', TARGET_TECH]
     weather_cols = ['Region', 'Date', TARGET_WEATHER]
@@ -51,13 +48,13 @@ def execute_fast_pipeline():
         cap_df = pd.read_csv(CAP_FILE, usecols=cap_cols).rename(columns={TARGET_TECH: 'Capacity_MW'})
         weather_df = pd.read_csv(WEATHER_FILE, usecols=weather_cols)
     except ValueError as e:
-        print(f"[!] Initialization Error. Check variable spelling: {e}")
+        st.error(f"Initialization Error. Check variable spelling: {e}")
         return
 
-    # 2. Lightning-Fast String Slicing (Bypasses slow datetime parsing)
+    # 2. Lightning-Fast String Slicing
     gen_df['Year'] = gen_df['Date'].str[:4].astype(int)
 
-    # 3. Direct Merge (Bypasses Melting)
+    # 3. Direct Merge
     merged = pd.merge(gen_df, cap_df, on=['Region', 'Country', 'Year'], how='inner')
     merged = merged.dropna(subset=['Daily_MWh'])
     merged['Daily_Potential_MWh'] = merged['Capacity_MW'] * 24
@@ -68,14 +65,13 @@ def execute_fast_pipeline():
         'Daily_Potential_MWh': 'sum'
     }).reset_index()
 
-    # 5. Timeframe Routing (String slicing for Month aggregation)
+    # 5. Timeframe Routing
     if TIMEFRAME == 'Monthly':
         agg_gen['Period'] = agg_gen['Date'].str[:7]
         weather_df['Period'] = weather_df['Date'].str[:7]
     elif TIMEFRAME == 'Daily':
         agg_gen['Period'] = agg_gen['Date']
         weather_df['Period'] = weather_df['Date']
-
 
     # 6. Final Mathematical Aggregation
     final_gen = agg_gen.groupby(['Region', 'Period']).agg({'Daily_MWh': 'sum', 'Daily_Potential_MWh': 'sum'}).reset_index()
@@ -86,22 +82,46 @@ def execute_fast_pipeline():
     final_df = pd.merge(final_gen, final_weather, on=['Region', 'Period'])
     regions = final_df['Region'].unique()
 
-    # 7. Visualization
+    # 7. Visualization (Plotly)
     colors = {'Northern Europe': '#1f77b4', 'Southern Europe': '#ff7f0e'}
-    fig, ax = plt.subplots(figsize=(11, 7))
+    clean_var_name = TARGET_WEATHER.replace('_', ' ').title()
+    
+    fig = go.Figure()
 
     for r in regions:
         r_data = final_df[final_df['Region'] == r].dropna(subset=[TARGET_WEATHER, 'CF'])
         x = r_data[TARGET_WEATHER].values
         y = r_data['CF'].values
+        periods = r_data['Period'].values
         n_samples = len(x)
         
-        dot_size = 20 if TIMEFRAME == 'Daily' else 70
-        dot_alpha = 0.4 if TIMEFRAME == 'Daily' else 0.7
-        edge_style = 'none' if TIMEFRAME == 'Daily' else 'black'
+        # Adjust visual density for Plotly sizing
+        dot_size = 5 if TIMEFRAME == 'Daily' else 10
+        dot_alpha = 0.5 if TIMEFRAME == 'Daily' else 0.8
+        line_width = 0 if TIMEFRAME == 'Daily' else 1
         
-        ax.scatter(x, y, color=colors.get(r, 'gray'), alpha=dot_alpha, s=dot_size, edgecolors=edge_style)
+        # Add the scatter points with rich hover data
+        fig.add_trace(go.Scatter(
+            x=x, y=y,
+            mode='markers',
+            marker=dict(
+                color=colors.get(r, 'gray'),
+                size=dot_size,
+                opacity=dot_alpha,
+                line=dict(width=line_width, color='black')
+            ),
+            name=f"{r} Data",
+            text=periods,
+            hovertemplate=(
+                f"<b>{r}</b><br>"
+                "Date/Period: %{text}<br>"
+                f"{clean_var_name}: %{{x:.2f}}<br>"
+                "Capacity Factor: %{y:.4f}<extra></extra>"
+            ),
+            showlegend=False # We embed the legend in the trendline to keep it clean
+        ))
         
+        # Pearson and Regression mathematically require at least 3 points
         if n_samples >= 3:
             slope, intercept, _, _, _ = stats.linregress(x, y)
             x_line = np.array([x.min(), x.max()])
@@ -111,27 +131,56 @@ def execute_fast_pipeline():
             ci_p = res_p.confidence_interval(confidence_level=0.95)
             
             p_val_str = "<0.001" if res_p.pvalue < 0.001 else f"{res_p.pvalue:.3f}"
-            label_text = (f"{r} (N={n_samples})\n"
-                          f"r = {res_p.statistic:.2f} (p {p_val_str})\n"
+            
+            # Format the statistics for the Plotly legend (using HTML line breaks)
+            label_text = (f"<b>{r} (N={n_samples})</b><br>"
+                          f"r = {res_p.statistic:.2f} (p {p_val_str})<br>"
                           f"95% CI: [{ci_p.low:.2f}, {ci_p.high:.2f}]")
             
-            ax.plot(x_line, y_line, color=colors.get(r, 'gray'), linestyle='--', linewidth=2.5, label=label_text)
+            fig.add_trace(go.Scatter(
+                x=x_line, y=y_line,
+                mode='lines',
+                line=dict(color=colors.get(r, 'gray'), dash='dash', width=3),
+                name=label_text,
+                hoverinfo='skip'
+            ))
         else:
-            ax.plot([], [], ' ', label=f"{r} (N={n_samples}, Insufficient Data)")
+            fig.add_trace(go.Scatter(
+                x=[None], y=[None],
+                mode='lines',
+                line=dict(color=colors.get(r, 'gray')),
+                name=f"<b>{r}</b><br>(N={n_samples}, Insufficient Data)"
+            ))
 
-    clean_var_name = TARGET_WEATHER.replace('_', ' ').title()
-    ax.set_title(f"Pearson Correlation: {TIMEFRAME} Capacity Factor vs. {clean_var_name} ({TARGET_TECH})", fontsize=14, fontweight='bold')
-    ax.set_xlabel(f"Average {clean_var_name}", fontsize=12)
-    ax.set_ylabel("Capacity Factor (CF)", fontsize=12)
-    
-    ax.legend(title="Region & Pearson Stats", loc='best', fontsize=9)
-    ax.grid(True, linestyle='--', alpha=0.5)
-    fig.tight_layout()
+    # Graph Formatting and Cleanup
+    fig.update_layout(
+        title=dict(
+            text=f"<b>Pearson Correlation: {TIMEFRAME} Capacity Factor vs. {clean_var_name} ({TARGET_TECH})</b>",
+            font=dict(size=20)
+        ),
+        xaxis_title=dict(text=f"Average {clean_var_name}", font=dict(size=14)),
+        yaxis_title=dict(text="Capacity Factor (CF)", font=dict(size=14)),
+        template="plotly_white",
+        hovermode="closest",
+        legend=dict(
+            title=dict(text="<b>Region & Pearson Stats</b>"),
+            yanchor="top",
+            y=0.98,
+            xanchor="left",
+            x=0.02,
+            bgcolor="rgba(255,255,255,0.85)",
+            bordercolor="black",
+            borderwidth=1,
+            font=dict(size=12)
+        ),
+        margin=dict(l=40, r=40, t=60, b=40)
+    )
 
-    st.pyplot(
-    fig,
-    use_container_width=True
-)
+    # Automatically add grid lines
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
+
+    st.plotly_chart(fig, use_container_width=True)
 
 if all([tech, weather, timeframe]):
     execute_fast_pipeline()
