@@ -175,7 +175,7 @@ if all([method,tech, weather, timeframe]):
                         fig.add_trace(go.Scatter(
                             x=x_lowess, y=y_lowess,
                             mode='lines',
-                            line=dict(color=colors.get(r, 'gray'), width=3, dash='dot'),
+                            line=dict(color=colors.get(r, 'gray'), width=3),
                             name=label_text,
                             hoverinfo='skip'
                         ))
