@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import scipy.stats as stats
 import plotly.graph_objects as go
+import statsmodels.api as sm
 
 st.set_page_config(
     page_title="Research Question 3",
