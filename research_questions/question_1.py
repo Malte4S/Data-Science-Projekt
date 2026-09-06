@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-SOL, ROR, RES = "Solar", "Hydro Running", "Hydro Reservoir"
+SOL, ROR, RES = "Solar", "Hydro Run-of-River", "Hydro water reservoir"
 TECHS = [SOL, ROR, RES]
 COLOR = {SOL: "goldenrod", ROR: "steelblue", RES: "darkslateblue"}
 
