@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-SOL, ROR, RES = "Solar", "Hydro Run-of-River", "Hydro water reservoir"
+SOL, ROR, RES = "Solar", "Hydro Running", "Hydro Reservoir"
 TECHS = [SOL, ROR, RES]
 COLOR = {SOL: "goldenrod", ROR: "steelblue", RES: "darkslateblue"}
 
@@ -91,15 +91,21 @@ st.caption("Average output on heatwave days compared to other July and August "
 # --- Graph 3 (interactive): temperature effect on modules ------------------
 st.subheader("Temperature effect on solar modules")
 
-percentile = st.slider("Heatwave threshold (percentile)", 0.80, 0.95, 0.85, 0.01)
-thr, hw = heatwaves(df, percentile)
-st.caption(f"Threshold {thr:.1f} °C · {int(hw.sum())} heatwave days")
+years = sorted(df.index.year.unique())
+first, last = st.slider("Period", min(years), max(years),
+                        (min(years), max(years)))
 
 d = df.copy()
 d["yield"] = d[SOL] / d["shortwave_radiation_sum"]
 d["yield"] /= d.groupby(d.index.year)["yield"].transform("mean")
-x, y, m_hw = d["temperature_2m_max"], d["yield"], hw.to_numpy()
+
+_, hw = heatwaves(df, 0.85)
+keep = (d.index.year >= first) & (d.index.year <= last)
+d, m_hw = d[keep], hw.to_numpy()[keep]
+
+x, y = d["temperature_2m_max"], d["yield"]
 slope, intercept = np.polyfit(x, y, 1)
+st.caption(f"{first}–{last} · {len(d)} days · {int(m_hw.sum())} of them heatwave days")
 
 fig, ax = plt.subplots(figsize=(8, 4))
 ax.scatter(x[~m_hw], y[~m_hw], s=8, color="lightsteelblue", edgecolor="none",
@@ -117,6 +123,7 @@ fig.tight_layout()
 st.pyplot(fig)
 st.caption("Solar output divided by incoming radiation, normalised per year. "
            "What remains is roughly the efficiency loss of the modules. Silicon "
-           "photovoltaics lose about 0.4 % per kelvin.")
+           "photovoltaics lose about 0.4 % per kelvin. Move the period slider: "
+           "the early years show a weaker slope, because Spain's fleet still "
+           "held a large share of solar thermal plants back then.")
 
-st.caption("Data (CC BY 4.0): Energy-Charts, Fraunhofer ISE · Open-Meteo (ERA5)")
