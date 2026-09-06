@@ -1,9 +1,12 @@
+# AI assisted code used for graphing and ploting.
 import streamlit as st
 import pandas as pd
 import numpy as np
 import scipy.stats as stats
 import plotly.graph_objects as go
 import statsmodels.api as sm
+from datetime import date
+
 
 st.set_page_config(
     page_title="Research Question 3",
@@ -11,202 +14,403 @@ st.set_page_config(
 )
 
 st.title("Research Question 3")
-st.write("How is renewable electricity generation associated with regional meteorological conditions between Northern and Southern European countries?​")
+st.write(
+"How is renewable electricity generation associated with regional meteorological conditions between Northern and Southern European countries?​"
+)
 
 st.subheader("Context")
 st.markdown(
-    "This research question concerns itself with the relationship between renewable electricity generation and regional meteorological condition in Northern and Southern European Countries, which were aggregated into said regions based on their geographical location ")
+"This research question concerns itself with the relationship between renewable electricity generation and regional meteorological condition in Northern and Southern European Countries, which were aggregated into said regions based on their geographical location."
+)
 
-st.subheader("Interactive Visualizations")
+st.header("A look at the Data")
 st.markdown(
-    "Each dot represents a day in the 2023-2025 period, with the x-axis representing the meteorological condition and the y-axis representing the renewable electricity generation. The dashed line represents the linear regression line. **Hover over the points to see the specific period and exact values.**")
+"This section provides a visual overview of the data required to answer the research question. It comprises of two main components: Weather Data and Renewable Energy Generation Data. Each of them is fetched from 18 different countries in Europe, between 2023 and 2025, and the data is aggregated into the two relevant regions: Northern Europe and Southern Europe."
+)
 
-method = st.segmented_control("Select the Correlation Method", ["Pearson", "Spearman"], default="Pearson")
-tech = st.segmented_control("Select the Technology", ['Solar', 'Wind', 'Hydro', 'Bioenergy'], default='Solar')
-weather = st.segmented_control("Select the Weather Variable", ['Shortwave_Radiation_Sum', 'Wind_Speed_100m', 'Wind_Gusts_10m_Max', 'Temperature_2m_Max', 'Apparent_Temperature_Min', 'Precipitation_Sum', 'Snow_Depth'], default='Shortwave_Radiation_Sum')
+#============================
+
+st.subheader("Weather Data")
+st.markdown(
+"The first component is the weather data, which consists of the weighted average of meteorological conditions across select representative coordinate clusters of countries in each region.  " 
+"\nHere you can select a specific weather variable to visualize its trend over time, and adjust the date range to focus on specific periods."
+)
+
+target_weather_var = st.selectbox("Select a Weather Variable", ['Shortwave_Radiation_Sum', 'Wind_Speed_100m', 'Wind_Gusts_10m_Max', 'Temperature_2m_Max', 'Apparent_Temperature_Min', 'Precipitation_Sum', 'Snow_Depth'], index=0)
+
+if "weather_date_range" not in st.session_state:
+    st.session_state.weather_date_range = (date(2023, 1, 1), date(2025, 12, 31))
+
+start_date, end_date = st.session_state.weather_date_range
+
+# 1. Load and prep weather data
+weather_timeseries = pd.read_csv("./data/Q3_Data/Regional_Weighted_Weather_2023_2025.csv")
+weather_timeseries['Date'] = pd.to_datetime(weather_timeseries['Date'])
+
+# 2. Apply Optional Timeframe Filter
+weather_timeseries = weather_timeseries[weather_timeseries['Date'] >= pd.to_datetime(start_date)]
+weather_timeseries = weather_timeseries[weather_timeseries['Date'] <= pd.to_datetime(end_date)]
+
+fig_weather = go.Figure()
+clean_var_name = target_weather_var.replace('_', ' ').title()
+colors = {'Northern Europe': '#1f77b4', 'Southern Europe': '#ff7f0e'}
+
+# 3. Generate a trace for each Region
+for region in weather_timeseries['Region'].unique():
+    region_data = weather_timeseries[weather_timeseries['Region'] == region]
+    
+    # Verify the variable exists to prevent fatal application crashes
+    if target_weather_var in region_data.columns:
+        fig_weather.add_trace(go.Scatter(
+            x=region_data['Date'],
+            y=region_data[target_weather_var],
+            mode='lines',
+            name=region,
+            line=dict(color=colors.get(region, 'gray')),
+            visible=True, # Plotly natively allows toggling regions by clicking the legend
+            hovertemplate=f"<b>{region}</b><br>Date: %{{x|%Y-%m-%d}}<br>{clean_var_name}: %{{y:.2f}}<extra></extra>"
+        ))
+        
+# 4. Graph Formatting
+fig_weather.update_layout(
+    title=dict(text=f"<b>Regional Trends: {clean_var_name}</b>", font=dict(size=20)),
+    xaxis_title=dict(text="Date", font=dict(size=14)),
+    yaxis_title=dict(text=clean_var_name, font=dict(size=14)),
+    template="plotly_white",
+    hovermode="x unified", # Groups both regions together on hover for easy daily comparison
+    legend=dict(
+        title=dict(text="<b>Toggle Region</b>"),
+        yanchor="top", y=1, xanchor="left", x=1.02,
+        bgcolor="rgba(255,255,255,0.85)", bordercolor="black", borderwidth=1
+    ),
+    margin=dict(l=40, r=200, t=60, b=0)
+)
+
+fig_weather.update_xaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
+fig_weather.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
+
+st.plotly_chart(fig_weather, use_container_width=True)
+
+
+_, middle, _  = st.columns([0.02, 0.7, 0.13], gap="small")
+
+with middle:
+    st.slider(label="Slide to select date range", min_value= date(2023, 1, 1), max_value= date(2025, 12, 31), value=(start_date, end_date), key="weather_date_range",format="DD/MM/YYYY")
+
+#============================
+
+st.subheader("Renewable Energy Generation Data")
+st.markdown(
+"The second component is then used to calculate the daily capacity factor of each region, for each technology. This is done to normalize the data, since energy production can differf significantly in scale between the two regions.  " 
+"\nThe capacity factor is then calculated as the ratio of the energy generation data, and the capacity data.  " 
+"\nFor these visualizations, you can select a specific technology, and then choose to view the data either at the regional level, or at the country level. If you select the country level, you can then choose which countries to include in the visualization. Alongside the graph, the capacity data is displayed in a table just below."
+)
+
+active_tech = st.segmented_control("Select the Technology", ['Solar', 'Wind', 'Hydro', 'Bioenergy'], selection_mode="single", default='Solar', required=True, key="generation_data")
+view_level = st.segmented_control("Select the View Level", ["Region", "Country"], selection_mode="single", default="Region", required=True)
+if view_level == "Country":
+    plot_entities = st.multiselect("Select Countries", ["Bosnia and Herzegovina", "Croatia", "Denmark", "Estonia", "Finland", "Greece", "Ireland", "Italy", "Latvia", "Lithuania", "Montenegro", "North Macedonia", "Norway", "Portugal", "Serbia", "Slovenia", "Spain", "Sweden"], default=None)
+else:
+    plot_entities = st.multiselect("Select Regions", ['Northern Europe', 'Southern Europe'], default=['Northern Europe', 'Southern Europe'])
+
+
+# Load and prep generation data
+gen_df = pd.read_csv("./data/Q3_Data/European_Daily_Generation_2023_2025.csv")
+gen_df['Date'] = pd.to_datetime(gen_df['Date'])
+
+fig_gen = go.Figure()
+
+# Dynamically group based on UI selection
+if view_level == "Region":
+    plot_df = gen_df[gen_df['Region'].isin(plot_entities)]
+    plot_df = plot_df.groupby(['Region', 'Date'])[active_tech].sum().reset_index()
+    entity_col = 'Region'
+else:
+    plot_df = gen_df[gen_df['Country'].isin(plot_entities)]
+    entity_col = 'Country'
+    
+# Generate a trace for every selected entity
+for entity in plot_entities:
+    entity_data = plot_df[plot_df[entity_col] == entity]
+    
+    if not entity_data.empty:
+        # Force a continuous daily calendar to break lines on missing days
+        entity_data = entity_data.set_index('Date').resample('D').asfreq().reset_index()
+        fig_gen.add_trace(go.Scatter(
+            x=entity_data['Date'],
+            y=entity_data[active_tech],
+            mode='lines',
+            name=entity,
+            visible=True, # Plotly natively allows toggling by clicking the legend
+            hovertemplate=f"<b>{entity}</b><br>Date: %{{x|%Y-%m-%d}}<br>Generation: %{{y:,.0f}} MWh<extra></extra>"
+        ))
+
+# Graph Formatting
+fig_gen.update_layout(
+    title=dict(text=f"<b>Daily {active_tech} Generation ({view_level} View)</b>", font=dict(size=20)),
+    xaxis_title=dict(text="Date", font=dict(size=14)),
+    yaxis_title=dict(text="Generation (MWh)", font=dict(size=14)),
+    template="plotly_white",
+    hovermode="x unified",
+    legend=dict(
+        title=dict(text="<b>Click to Toggle</b>"),
+        yanchor="top", y=1, xanchor="left", x=1.02,
+        bgcolor="rgba(255,255,255,0.85)", bordercolor="black", borderwidth=1
+    ),
+    margin=dict(l=40, r=200, t=60, b=40)
+)
+
+fig_gen.update_xaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
+fig_gen.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
+
+st.plotly_chart(fig_gen, use_container_width=True)
+
+
+# Load capacity data
+cap_df = pd.read_csv("./data/Q3_Data/European_Validated_Capacity_2023_2025.csv")
+
+# Route logic based on view level
+if view_level == "Region":
+    table_df = cap_df[cap_df['Region'].isin(plot_entities)]
+    table_df = table_df.groupby(['Region', 'Year'])[['Bioenergy', 'Hydro', 'Wind', 'Solar']].sum().reset_index()
+else:
+    table_df = cap_df[cap_df['Country'].isin(plot_entities)]
+    table_df = table_df[['Region', 'Country', 'Year', 'Bioenergy', 'Hydro', 'Wind', 'Solar']]
+    
+# Format the raw numbers into readable text strings (e.g., "15,400 MW")
+for col in ['Bioenergy', 'Hydro', 'Wind', 'Solar']:
+    if col in table_df.columns:
+        table_df[col] = table_df[col].apply(lambda x: f"{x:,.0f} MW")
+    
+# Construct the Plotly Table
+fig_table = go.Figure(data=[go.Table(
+    header=dict(
+        values=[f"<b>{col}</b>" for col in table_df.columns],
+        fill_color='rgba(0,0,0,0)',  # Fully transparent background
+        line_color='rgba(255,255,255,0.2)',  # Subtle translucent white borders
+        align='left',
+        font=dict(color='white', size=14)
+    ),
+    cells=dict(
+        values=[table_df[col] for col in table_df.columns],
+        fill_color='rgba(0,0,0,0)',  # Fully transparent background
+        line_color='rgba(255,255,255,0.2)',  # Subtle translucent white borders
+        align='left',
+        font=dict(color='white', size=12),  # Flipped to white for the dark theme
+        height=30
+    )
+)])
+
+# Table Formatting
+fig_table.update_layout(
+    title=dict(text=f"<b>Total Capacity ({view_level} View)</b>", font=dict(color='white', size=20)),
+    margin=dict(l=0, r=0, t=50, b=0),
+    height=250,
+    paper_bgcolor='rgba(0,0,0,0)',  # Makes the surrounding canvas transparent
+    plot_bgcolor='rgba(0,0,0,0)'
+)
+st.plotly_chart(fig_table, use_container_width=True)
+
+#============================
+
+st.header("Interactive Visualizations")
+st.markdown(
+"The final visualization shows the correlation between the selected weather conditions and renewable energy generation.  "
+"\nEach dot represents a day in the 2023-2025 period, with the x-axis representing the meteorological condition and the y-axis representing the renewable electricity generation. "
+"\nTo interact with the graph, you can select a specific correlation method (Pearson or Spearman), a technology, and a weather variable. You can also filter the data by season to focus on specific periods of the year.  "
+"\nIt should be noted that not every possible combination of weather variable and technology will yield a statistically significant correlation, so please interpret the results with caution. Hover over the points to see the specific period and exact values."
+)
+
+method = st.segmented_control("Select the Correlation Method", ["Pearson", "Spearman"], selection_mode="single", default="Pearson", required=True)
+tech = st.segmented_control("Select the Technology", ['Solar', 'Wind', 'Hydro', 'Bioenergy'], selection_mode="single", default='Solar', required=True, key="interactive_data")
+weather = st.segmented_control("Select the Weather Variable", ['Shortwave_Radiation_Sum', 'Wind_Speed_100m', 'Wind_Gusts_10m_Max', 'Temperature_2m_Max', 'Apparent_Temperature_Min', 'Precipitation_Sum', 'Snow_Depth'], selection_mode="single", default='Shortwave_Radiation_Sum', required=True)
 seasons = st.segmented_control("Filter by Season", ['Spring', 'Summer', 'Autumn', 'Winter'], selection_mode="multi", default=[])
 
 GEN_FILE = "./data/Q3_Data/European_Daily_Generation_2023_2025.csv"
 CAP_FILE = "./data/Q3_Data/European_Validated_Capacity_2023_2025.csv"
 WEATHER_FILE = "./data/Q3_Data/Regional_Weighted_Weather_2023_2025.csv"
 
-# AI assisted code from here on.
-if all([method,tech, weather]):
+if "zoom" not in st.session_state:
+    st.session_state.zoom = 600
 
-    def calculate_spearman_ci(rho, n):
-        if abs(rho) == 1.0:
-            return rho, rho
-        z = np.arctanh(rho)
-        se = 1 / np.sqrt(n - 3)
-        z_crit = stats.norm.ppf(0.975)
-        ci_low = np.tanh(z - z_crit * se)
-        ci_high = np.tanh(z + z_crit * se)
-        return ci_low, ci_high
+def calculate_spearman_ci(rho, n):
+    if abs(rho) == 1.0:
+        return rho, rho
+    z = np.arctanh(rho)
+    se = 1 / np.sqrt(n - 3)
+    z_crit = stats.norm.ppf(0.975)
+    ci_low = np.tanh(z - z_crit * se)
+    ci_high = np.tanh(z + z_crit * se)
+    return ci_low, ci_high
 
-    # 1. Targeted File Loading
-    gen_cols = ['Region', 'Country', 'Date', tech]
-    cap_cols = ['Region', 'Country', 'Year', tech]
-    weather_cols = ['Region', 'Date', weather]
+# 1. Targeted File Loading
+gen_cols = ['Region', 'Country', 'Date', tech]
+cap_cols = ['Region', 'Country', 'Year', tech]
+weather_cols = ['Region', 'Date', weather]
 
-    gen_df = pd.read_csv(GEN_FILE, usecols=gen_cols).rename(columns={tech: 'Daily_MWh'})
-    cap_df = pd.read_csv(CAP_FILE, usecols=cap_cols).rename(columns={tech: 'Capacity_MW'})
-    weather_df = pd.read_csv(WEATHER_FILE, usecols=weather_cols)
+gen_df = pd.read_csv(GEN_FILE, usecols=gen_cols).rename(columns={tech: 'Daily_MWh'})
+cap_df = pd.read_csv(CAP_FILE, usecols=cap_cols).rename(columns={tech: 'Capacity_MW'})
+weather_df = pd.read_csv(WEATHER_FILE, usecols=weather_cols)
 
-    gen_df['Year'] = gen_df['Date'].str[:4].astype(int)
+gen_df['Year'] = gen_df['Date'].str[:4].astype(int)
 
-    # 2. Direct Merge
-    merged = pd.merge(gen_df, cap_df, on=['Region', 'Country', 'Year'], how='inner')
-    merged = merged.dropna(subset=['Daily_MWh'])
-    merged['Daily_Potential_MWh'] = merged['Capacity_MW'] * 24
+# 2. Direct Merge
+merged = pd.merge(gen_df, cap_df, on=['Region', 'Country', 'Year'], how='inner')
+merged = merged.dropna(subset=['Daily_MWh'])
+merged['Daily_Potential_MWh'] = merged['Capacity_MW'] * 24
 
-    # 3. Dynamic Date Slicing & Single Aggregation
-    slice_len = 10
-    merged['Period'] = merged['Date'].str[:slice_len]
-    weather_df['Period'] = weather_df['Date'].str[:slice_len]
+# 3. Dynamic Date Slicing & Single Aggregation
+slice_len = 10
+merged['Period'] = merged['Date'].str[:slice_len]
+weather_df['Period'] = weather_df['Date'].str[:slice_len]
 
-    final_gen = merged.groupby(['Region', 'Period']).agg({'Daily_MWh': 'sum', 'Daily_Potential_MWh': 'sum'}).reset_index()
-    final_gen['CF'] = final_gen['Daily_MWh'] / final_gen['Daily_Potential_MWh']
+final_gen = merged.groupby(['Region', 'Period']).agg({'Daily_MWh': 'sum', 'Daily_Potential_MWh': 'sum'}).reset_index()
+final_gen['CF'] = final_gen['Daily_MWh'] / final_gen['Daily_Potential_MWh']
 
-    final_weather = weather_df.groupby(['Region', 'Period'])[[weather]].mean().reset_index()
-    final_df = pd.merge(final_gen, final_weather, on=['Region', 'Period'])
+final_weather = weather_df.groupby(['Region', 'Period'])[[weather]].mean().reset_index()
+final_df = pd.merge(final_gen, final_weather, on=['Region', 'Period'])
 
 # --- INSERT SEASONAL LOGIC HERE ---
-    # 1. Extract the numerical month (characters 5 and 6) from 'YYYY-MM' or 'YYYY-MM-DD'
-    final_df['Month_Num'] = final_df['Period'].str[5:7].astype(int)
-    
-    # 2. Map the month integers to standard meteorological seasons
-    def map_season(m):
-        if m in [3, 4, 5]: return 'Spring'
-        elif m in [6, 7, 8]: return 'Summer'
-        elif m in [9, 10, 11]: return 'Autumn'
-        else: return 'Winter'
-        
-    final_df['Season'] = final_df['Month_Num'].apply(map_season)
-    
-    # 3. Filter the dataframe if the user has clicked any buttons
-    if seasons:
-        final_df = final_df[final_df['Season'].isin(seasons)]
-    # --- END SEASONAL LOGIC ---
+# 1. Extract the numerical month (characters 5 and 6) from 'YYYY-MM' or 'YYYY-MM-DD'
+final_df['Month_Num'] = final_df['Period'].str[5:7].astype(int)
 
-    # 4. Visualization Setup
-    colors = {'Northern Europe': '#1f77b4', 'Southern Europe': '#ff7f0e'}
-    clean_var_name = weather.replace('_', ' ').title()
+# 2. Map the month integers to standard meteorological seasons
+def map_season(m):
+    if m in [3, 4, 5]: return 'Spring'
+    elif m in [6, 7, 8]: return 'Summer'
+    elif m in [9, 10, 11]: return 'Autumn'
+    else: return 'Winter'
     
-    # Extract loop invariants
-    dot_size = 5 
-    dot_alpha = 0.5 
-    line_width = 0 
+final_df['Season'] = final_df['Month_Num'].apply(map_season)
+
+# 3. Filter the dataframe if the user has clicked any buttons
+if seasons:
+    final_df = final_df[final_df['Season'].isin(seasons)]
+# --- END SEASONAL LOGIC ---
+
+# 4. Visualization Setup
+colors = {'Northern Europe': '#1f77b4', 'Southern Europe': '#ff7f0e'}
+clean_var_name = weather.replace('_', ' ').title()
+
+# Extract loop invariants
+dot_size = 5 
+dot_alpha = 0.5 
+line_width = 0 
+
+fig = go.Figure()
+
+# 5. Native Groupby Looping
+for r, r_data in final_df.groupby('Region'):
+    r_data = r_data.dropna(subset=[weather, 'CF'])
+    x = r_data[weather].values
+    y = r_data['CF'].values
+    periods = r_data['Period'].values
+    n_samples = len(x)
     
-    fig = go.Figure()
-
-    # 5. Native Groupby Looping
-    for r, r_data in final_df.groupby('Region'):
-        r_data = r_data.dropna(subset=[weather, 'CF'])
-        x = r_data[weather].values
-        y = r_data['CF'].values
-        periods = r_data['Period'].values
-        n_samples = len(x)
-        
-        fig.add_trace(go.Scatter(
-            x=x, y=y,
-            mode='markers',
-            marker=dict(
-                color=colors.get(r, 'gray'),
-                size=dot_size,
-                opacity=dot_alpha,
-                line=dict(width=line_width, color='black')
-            ),
-            name=f"{r} Data",
-            text=periods,
-            hovertemplate=(
-                f"<b>{r}</b><br>"
-                "Date/Period: %{text}<br>"
-                f"{clean_var_name}: %{{x:.2f}}<br>"
-                "Capacity Factor: %{y:.4f}<extra></extra>"
-            ),
-            showlegend=False
-        ))
-        
-        if method == "Pearson":
-            if n_samples >= 3:
-                slope, intercept, _, _, _ = stats.linregress(x, y)
-                x_line = np.array([x.min(), x.max()])
-                y_line = slope * x_line + intercept
-                
-                res_p = stats.pearsonr(x, y)
-                ci_p = res_p.confidence_interval(confidence_level=0.95)
-                p_val_str = "<0.001" if res_p.pvalue < 0.001 else f"{res_p.pvalue:.3f}"
-                
-                label_text = (f"<b>{r} (N={n_samples})</b><br>"
-                              f"r = {res_p.statistic:.2f} (p {p_val_str})<br>"
-                              f"95% CI: [{ci_p.low:.2f}, {ci_p.high:.2f}]")
-                
-                fig.add_trace(go.Scatter(
-                    x=x_line, y=y_line,
-                    mode='lines',
-                    line=dict(color=colors.get(r, 'gray'), dash='dash', width=3),
-                    name=label_text,
-                    hoverinfo='skip'
-                ))
-        elif method == "Spearman":
-                    if n_samples >= 4:
-                        res_s = stats.spearmanr(x, y)
-                        rho = res_s.statistic
-                        ci_low, ci_high = calculate_spearman_ci(rho, n_samples)
-                        p_val_str = "<0.001" if res_s.pvalue < 0.001 else f"{res_s.pvalue:.3f}"
-                        
-                        label_text = (f"<b>{r} (N={n_samples})</b><br>"
-                                      f"ρ = {rho:.2f} (p {p_val_str})<br>"
-                                      f"95% CI: [{ci_low:.2f}, {ci_high:.2f}]")
-                        
-                        # 1. Sort the data sequentially so the smoothing line draws cleanly left-to-right
-                        sorted_indices = np.argsort(x)
-                        x_sorted = x[sorted_indices]
-                        y_sorted = y[sorted_indices]
-        
-                        # 2. Calculate the LOWESS curve (frac=0.3 means it evaluates 30% of the data at a time for smoothness)
-                        lowess = sm.nonparametric.lowess(y_sorted, x_sorted, frac=0.3)
-                        x_lowess = lowess[:, 0]
-                        y_lowess = lowess[:, 1]
-        
-                        # 3. Draw the curving LOWESS trendline
-                        fig.add_trace(go.Scatter(
-                            x=x_lowess, y=y_lowess,
-                            mode='lines',
-                            line=dict(color=colors.get(r, 'gray'), width=3),
-                            name=label_text,
-                            hoverinfo='skip'
-                        ))
-
-    # Graph Formatting
-    fig.update_layout(
-        height=700,
-        title=dict(
-            text=f"<b>{method} Correlation: Daily Capacity Factor vs. {clean_var_name} ({tech})</b>",
-            font=dict(size=20)
+    fig.add_trace(go.Scatter(
+        x=x, y=y,
+        mode='markers',
+        marker=dict(
+            color=colors.get(r, 'gray'),
+            size=dot_size,
+            opacity=dot_alpha,
+            line=dict(width=line_width, color='black')
         ),
-        xaxis_title=dict(text=f"Average {clean_var_name}", font=dict(size=14)),
-        yaxis_title=dict(text="Capacity Factor (CF)", font=dict(size=14)),
-        template="plotly_white",
-        hovermode="closest",
-        legend=dict(
-            title=dict(text=f"<b>Region & {method} Stats</b>"),
-            yanchor="top",
-            y=0.98,
-            xanchor="left",
-            x=0.02,
-            bgcolor="rgba(255,255,255,0.85)",
-            bordercolor="black",
-            borderwidth=1,
-            font=dict(size=12)
+        name=f"{r} Data",
+        text=periods,
+        hovertemplate=(
+            f"<b>{r}</b><br>"
+            "Date/Period: %{text}<br>"
+            f"{clean_var_name}: %{{x:.2f}}<br>"
+            "Capacity Factor: %{y:.4f}<extra></extra>"
         ),
-        margin=dict(l=40, r=40, t=60, b=40)
-    )
+        showlegend=False
+    ))
+    
+    if method == "Pearson":
+        if n_samples >= 3:
+            slope, intercept, _, _, _ = stats.linregress(x, y)
+            x_line = np.array([x.min(), x.max()])
+            y_line = slope * x_line + intercept
+            
+            res_p = stats.pearsonr(x, y)
+            ci_p = res_p.confidence_interval(confidence_level=0.95)
+            p_val_str = "<0.001" if res_p.pvalue < 0.001 else f"{res_p.pvalue:.3f}"
+            
+            label_text = (f"<b>{r} (N={n_samples})</b><br>"
+                            f"r = {res_p.statistic:.2f} (p {p_val_str})<br>"
+                            f"95% CI: [{ci_p.low:.2f}, {ci_p.high:.2f}]")
+            
+            fig.add_trace(go.Scatter(
+                x=x_line, y=y_line,
+                mode='lines',
+                line=dict(color=colors.get(r, 'gray'), dash='dash', width=3),
+                name=label_text,
+                hoverinfo='skip'
+            ))
+    elif method == "Spearman":
+                if n_samples >= 4:
+                    res_s = stats.spearmanr(x, y)
+                    rho = res_s.statistic
+                    ci_low, ci_high = calculate_spearman_ci(rho, n_samples)
+                    p_val_str = "<0.001" if res_s.pvalue < 0.001 else f"{res_s.pvalue:.3f}"
+                    
+                    label_text = (f"<b>{r} (N={n_samples})</b><br>"
+                                    f"ρ = {rho:.2f} (p {p_val_str})<br>"
+                                    f"95% CI: [{ci_low:.2f}, {ci_high:.2f}]")
+                    
+                    # 1. Sort the data sequentially so the smoothing line draws cleanly left-to-right
+                    sorted_indices = np.argsort(x)
+                    x_sorted = x[sorted_indices]
+                    y_sorted = y[sorted_indices]
+    
+                    # 2. Calculate the LOWESS curve (frac=0.3 means it evaluates 30% of the data at a time for smoothness)
+                    lowess = sm.nonparametric.lowess(y_sorted, x_sorted, frac=0.3)
+                    x_lowess = lowess[:, 0]
+                    y_lowess = lowess[:, 1]
+    
+                    # 3. Draw the curving LOWESS trendline
+                    fig.add_trace(go.Scatter(
+                        x=x_lowess, y=y_lowess,
+                        mode='lines',
+                        line=dict(color=colors.get(r, 'gray'), width=3),
+                        name=label_text,
+                        hoverinfo='skip'
+                    ))
 
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
+# Graph Formatting
+fig.update_layout(
+    height=st.session_state.zoom,
+    title=dict(
+        text=f"<b>{method} Correlation: Daily Capacity Factor vs. {clean_var_name} ({tech})</b>",
+        font=dict(size=20)
+    ),
+    xaxis_title=dict(text=f"Average {clean_var_name}", font=dict(size=14)),
+    yaxis_title=dict(text="Capacity Factor (CF)", font=dict(size=14)),
+    template="plotly_white",
+    hovermode="closest",
+    legend=dict(
+        title=dict(text=f"<b>Region & {method} Stats</b>"),
+        yanchor="top",
+        y=0.98,
+        xanchor="left",
+        x=0.02,
+        bgcolor="rgba(255,255,255,0.85)",
+        bordercolor="black",
+        borderwidth=1,
+        font=dict(size=12)
+    ),
+    margin=dict(l=40, r=40, t=60, b=40)
+)
 
-    st.plotly_chart(fig, use_container_width=True)
+fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
+fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
 
-else:
-    st.info("Please select a Correlation Method, Technology, and Weather Variable to display the analysis.")
+st.plotly_chart(fig, use_container_width=True)
+
+
+
+_, middle, _  = st.columns([0.02, 0.4, 0.5], gap="small")
+
+with middle:
+    st.slider(label="Adjust Plot Height", min_value=600, max_value=1200, value=600,step=10,format="%d", key="zoom")
