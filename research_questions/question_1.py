@@ -3,9 +3,9 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-SOL, ROR, RES = "Solar", "Hydro Running", "Hydro Reservoir"
+SOL, ROR, RES = "Solar", "Hydro Run-of-River", "Hydro water reservoir"
 TECHS = [SOL, ROR, RES]
-NAME = {SOL: "Solar", ROR: "Hydro Running", RES: "Hydro Reservoir"}
+NAME = {SOL: "Solar", ROR: "Hydro Run-of-River", RES: "Hydro water reservoir"}
 COLOR = {SOL: "goldenrod", ROR: "steelblue", RES: "darkslateblue"}
 
 @st.cache_data
