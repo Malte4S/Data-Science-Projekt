@@ -203,10 +203,11 @@ if presets is not None:
                         ))
 
     # Graph Formatting
+    seasons_str = str(seasons).replace("'", "").replace("[", "").replace("]", "")
     fig.update_layout(
         height=st.session_state.zoom,
         title=dict(
-            text=f"<b>{method} Correlation: Daily Capacity Factor vs. {clean_var_name} ({tech}) ({str(seasons).replace("'", "").replace("[", "").replace("]", "")})</b>",
+            text=f"<b>{method} Correlation: Daily Capacity Factor vs. {clean_var_name} ({tech}) (seasons_str)</b>",
             font=dict(size=20)
         ),
         xaxis_title=dict(text=f"Average {clean_var_name}", font=dict(size=14)),
