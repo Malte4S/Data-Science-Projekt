@@ -102,7 +102,7 @@ for r, r_data in final_df.groupby('Region'):
     periods = r_data['Period'].values
     n_samples = len(x)
     
-    fig.add_trace(go.Scatter(
+    fig.add_trace(go.Scattergl(
         x=x, y=y,
         mode='markers',
         marker=dict(
@@ -136,7 +136,7 @@ for r, r_data in final_df.groupby('Region'):
                             f"r = {res_p.statistic:.2f} (p {p_val_str})<br>"
                             f"95% CI: [{ci_p.low:.2f}, {ci_p.high:.2f}]")
             
-            fig.add_trace(go.Scatter(
+            fig.add_trace(go.Scattergl(
                 x=x_line, y=y_line,
                 mode='lines',
                 line=dict(color=colors.get(r, 'gray'), dash='dash', width=3),
@@ -165,7 +165,7 @@ for r, r_data in final_df.groupby('Region'):
                     y_lowess = lowess[:, 1]
     
                     # 3. Draw the curving LOWESS trendline
-                    fig.add_trace(go.Scatter(
+                    fig.add_trace(go.Scattergl(
                         x=x_lowess, y=y_lowess,
                         mode='lines',
                         line=dict(color=colors.get(r, 'gray'), width=3),
