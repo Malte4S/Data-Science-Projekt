@@ -44,7 +44,7 @@ elif st.session_state.preset == "Bioenergy":
     )
 
 preset_dict = {
-    "Spring": ("Spearman", "Solar", "Snow_Depth", ["Spring"],
+    "Spring": ("Spearman", "Solar", "Snow_Depth", ["Spring"]),
     "Wind": ("Pearson", "Wind", "Wind_Speed_100m",["Spring", "Summer", "Autumn", "Winter"]),
     "Wind Speed": ("Spearman", "Hydro", "Wind_Speed_100m",["Winter"]),
     "Bioenergy": ("Spearman", "Bioenergy", "Apparent_Temperature_Min", ["Spring", "Summer", "Autumn", "Winter"]),
