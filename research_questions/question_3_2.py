@@ -18,37 +18,52 @@ if st.session_state.preset is None:
     "\n**Select one of the four presets below to view our chosen correlation for each technology.**"
     )
 elif st.session_state.preset == "Solar":
-    st.header("Solar Correlation")
+    st.header("Negative Correlation between Snow Depth and Solar Energy Output")
     st.markdown(
-    "test description: Snow depth has strong negative correlation due to a)it covering the panels, and b) it being associated with cold weather and low solar activity. The interesting thing is that this correlation only shines through if you separate spring from the rest of the year. in the spring the drop off is much more gradual, here it's very cliffy so to speak. On top of that, the activity actually goes up with higher snow depth, likely because higher snow depth is correlated with sunnier and clearer weather."
+    "Filtered by summer, autumn and winter, snow depth has a strong negative correlation with solar energy utilization across both regions. This can be explained by the solar panels being physically impeded by a layer of snow, and that snow is correlated with less shortwave radiation in general.  "
+    "\nThe interesting aspect of this correlation is the steep drop off to zero, which resembles asymptotic decay. One can also see how starting at a certain depth, there's actually an upwards trend again, at different point in both regions; Hovering over the relevant values reveals that these values are concentrated around January and February, where solar activity increases again. This implies that snow might be a secondary driver here, as it directly correlates with a decrease in solar activity.  "
+    "\nFiltered by just spring, where solar activity picks up again, one can see a much more gradual decline."
     )
 elif st.session_state.preset == "Wind":
-    st.header("Wind Correlation")
+    st.header("Linear Growth of Turbine Output in Relation to Wind Speed")
     st.markdown(
-    "test description: at the micro level, the relation is cubic; wind speed cubed it wind power, therefore wind speed and generation should be cubed as well. but this shows, that at the macro level, it averages itself out into a linear relationship, whether this is due to turbine clamping, or just weather variation"
+    "At the micro-scale, wind speed has a cubic relationship with turbine activity (bounded by automatic shut-offs); wind power is proportional to the cube of the wind speed, therefore one would usually expect an equally non-linear correlation. "
+    "\nThis on the other hand showcases a strong positive linear correlation in both regions, which is likely the result of macro-scale regional variation, and smoothing of data."
     )
 elif st.session_state.preset == "Hydro":
-    st.header("Hydro Correlation")
+    st.header("Precipitation and Economic Incentives in the North")
     st.markdown(
-    "test description: why wind? well, you'd firstly just intuitively expect precipitation to meaning more hydro, but here's where economics come into play; hydro is a giant physical batter, so the logic is that when it rains, you better store the water rather than let it run, which is why the baseline correlation is reasonably negative in the north. the south on the other hand doesnt seem to engage in this electricity hoarding business like reasonable ppl humph! anyway, in the winter it's particularly pronounced, since heavy storms bring heavy precipitation, and what do storm bring as well? wind! and where there is an overflow of cheap wind energy, theres even less incentive to use hydro; better to hoard it and sell when prices are high"
+    "When taking on this project we had little knowledge on this topic, which is why we intuitively expected there to be a strong positive correlation here; the more precipitation, the more flowing water that generates electricity. Though in this case, its main driver is the economy. When filtered by seasons, you can see a generally strong negative correlation between precipitation and hydro energy generation in the north, the strongest correlation being in winter. The south on the other hand consistently shows a negligible correlation.  "
+    "\nThe main correlation we are looking at though is between wind speed and hydro energy utilization in winter. In northern Europe, winter precipitation is often accompanied by strong winds as well, which implies here that the main economic factor lies in the utilization of cheaper wind energy instead of hydro energy, which could be used as a reserve for when electricity is more scarce in the long-run."
     )
 elif st.session_state.preset == "Bioenergy":
-    st.header("Bioenergy Correlation")
+    st.header("Effect of Apparent Temperature on Bioenergy Utilization")
     st.markdown(
-    "test description: this is interesting in that the south and the north show opposite correlations; the north appears to be utilizing bio much more when its getting colder (apparent temp is felt temp), so they dispatch for heating. the south on the other hand has a rather weak positive correlation, which could imply they use it as it's getting warmer, maybe because the stuff they use to burn gets cheaper in the summer, or becauses of ACs (yuck ACs, never heard of Stroßlüften??)"
+    "This correlation shows a regional divide; in the north, bioenergy utilization is moderately strongly correlated with a decrease in minimum apparent temperature; while the south has a weak, positive correlation. This showcases how bioenergy is utilized in central heating in northern countries, experiencing an uptick in the colder months.  "
+    "\nSouthern European countries on the other hand barely rely on centralized district heating, so the positive correlation *could* be explained with a higher overall demand for electricity."
     )
 
 preset_dict = {
-    "Solar": ("Spearman", "Solar", "Snow_Depth", ["Summer", "Autumn", "Winter"]),
+    "Spring": ("Spearman", "Solar", "Snow_Depth", ["Summer", "Autumn", "Winter"]),
     "Wind": ("Pearson", "Wind", "Wind_Speed_100m",["Spring", "Summer", "Autumn", "Winter"]),
-    "Hydro": ("Spearman", "Hydro", "Wind_Speed_100m",["Winter"]),
-    "Bioenergy": ("Spearman", "Bioenergy", "Apparent_Temperature_Min", ["Spring", "Summer", "Autumn", "Winter"])
+    "Wind": ("Spearman", "Hydro", "Wind_Speed_100m",["Winter"]),
+    "Bioenergy": ("Spearman", "Bioenergy", "Apparent_Temperature_Min", ["Spring", "Summer", "Autumn", "Winter"]),
+    "Rest of the Year": ("Spearman", "Solar", "Snow_Depth", ["Spring"]),
+    "Precipitation": ("Spearman", "Hydro", "Precipitation_Sum",["Winter"])
 }
 
 presets = st.segmented_control("Select a Preset", ["Solar", "Wind", "Hydro", "Bioenergy"], selection_mode="single", default=None, key="preset")
 
+
 if presets is not None:
-    method, tech, weather, seasons = preset_dict[presets]
+    if presets == "Solar":
+        options = st.segmented_control("Select a Preset", ["Spring","Rest of the Year"], selection_mode="single", required=True, default= "Spring")
+        method, tech, weather, seasons = preset_dict[options]
+    elif presets == "Hydro":
+        options = st.segmented_control("Select a Preset", ["Wind","Precipitation"], selection_mode="single", required=True, default= "Wind")
+        method, tech, weather, seasons = preset_dict[options]
+    else:
+        method, tech, weather, seasons = preset_dict[presets]
 
     GEN_FILE = "./data/Q3_Data/European_Daily_Generation_2023_2025.csv"
     CAP_FILE = "./data/Q3_Data/European_Validated_Capacity_2023_2025.csv"
