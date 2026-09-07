@@ -61,7 +61,7 @@ for region in weather_timeseries['Region'].unique():
     
     # Verify the variable exists to prevent fatal application crashes
     if target_weather_var in region_data.columns:
-        fig_weather.add_trace(go.Scatter(
+        fig_weather.add_trace(go.Scattergl(
             x=region_data['Date'],
             y=region_data[target_weather_var],
             mode='lines',
@@ -136,7 +136,7 @@ for entity in plot_entities:
     if not entity_data.empty:
         # Force a continuous daily calendar to break lines on missing days
         entity_data = entity_data.set_index('Date').resample('D').asfreq().reset_index()
-        fig_gen.add_trace(go.Scatter(
+        fig_gen.add_trace(go.Scattergl(
             x=entity_data['Date'],
             y=entity_data[active_tech],
             mode='lines',
