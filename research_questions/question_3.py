@@ -182,32 +182,7 @@ for col in ['Bioenergy', 'Hydro', 'Wind', 'Solar']:
     if col in table_df.columns:
         table_df[col] = table_df[col].apply(lambda x: f"{x:,.0f} MW")
     
-# Construct the Plotly Table
-fig_table = go.Figure(data=[go.Table(
-    header=dict(
-        values=[f"<b>{col}</b>" for col in table_df.columns],
-        fill_color='rgba(0,0,0,0)',  # Fully transparent background
-        line_color='rgba(255,255,255,0.2)',  # Subtle translucent white borders
-        align='left',
-        font=dict(color='white', size=14)
-    ),
-    cells=dict(
-        values=[table_df[col] for col in table_df.columns],
-        fill_color='rgba(0,0,0,0)',  # Fully transparent background
-        line_color='rgba(255,255,255,0.2)',  # Subtle translucent white borders
-        align='left',
-        font=dict(color='white', size=12),  # Flipped to white for the dark theme
-        height=30
-    )
-)])
-
-# Table Formatting
-fig_table.update_layout(
-    title=dict(text=f"<b>Total Capacity ({view_level} View)</b>", font=dict(color='white', size=20)),
-    margin=dict(l=0, r=0, t=50, b=0),
-    height=250,
-    paper_bgcolor='rgba(0,0,0,0)',  # Makes the surrounding canvas transparent
-    plot_bgcolor='rgba(0,0,0,0)'
-)
-st.plotly_chart(fig_table, use_container_width=True)
+# Display the capacity data using a native Streamlit dataframe
+st.markdown(f"**Total Capacity ({view_level} View)**")
+st.dataframe(table_df, use_container_width=True, hide_index=True)
 
