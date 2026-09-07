@@ -25,7 +25,7 @@ st.markdown(
 
 st.header("A look at the Data")
 st.markdown(
-"This section provides a visual overview of the data required to answer the research question. It comprises of two main components: Weather Data and Renewable Energy Generation Data. Each of them is fetched from 18 different countries in Europe, between 2023 and 2025, and the data is aggregated into the two relevant regions: Northern Europe and Southern Europe."
+"In the following section, we will provide a visual overview of the data required to answer the research question. It comprises of two main components: the weather data and the renewable energy generation data. Each of them was fetched from 18 different countries in Europe between 2023 and 2025, and then aggregated into the two relevant regions: Northern Europe and southern Europe."
 )
 
 #============================
@@ -101,9 +101,8 @@ with middle:
 
 st.subheader("Renewable Energy Generation Data")
 st.markdown(
-"The second component is then used to calculate the daily capacity factor of each region, for each technology. This is done to normalize the data, since energy production can differf significantly in scale between the two regions.  " 
-"\nThe capacity factor is then calculated as the ratio of the energy generation data, and the capacity data.  " 
-"\nFor these visualizations, you can select a specific technology, and then choose to view the data either at the regional level, or at the country level. If you select the country level, you can then choose which countries to include in the visualization. Alongside the graph, the capacity data is displayed in a table just below."
+"The second component is then used to calculate the daily capacity factor of each region, for each technology. This is done to normalize the data, since energy production can differ significantly between both regions. The capacity factor is then calculated as the ratio of the energy generation data, and the capacity data.  " 
+"\nFor these visualizations, you can select the specific technology, and then choose to view the data either at the regional or country level. If you select the country level, you can then choose which countries to include in the visualization. Alongside the graph, the capacity data is displayed in a table below."
 )
 
 active_tech = st.segmented_control("Select the Technology", ['Solar', 'Wind', 'Hydro', 'Bioenergy'], selection_mode="single", default='Solar', required=True, key="generation_data")
