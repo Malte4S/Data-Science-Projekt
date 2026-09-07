@@ -60,7 +60,7 @@ if presets is not None:
         options = st.segmented_control("Select a Preset", ["Spring","Rest of the Year"], selection_mode="single", required=True, default= "Spring")
         method, tech, weather, seasons = preset_dict[options]
     elif presets == "Hydro":
-        options = st.segmented_control("Select a Preset", ["Wind","Precipitation"], selection_mode="single", required=True, default= "Wind")
+        options = st.segmented_control("Select a Preset", ["Wind Speed","Precipitation"], selection_mode="single", required=True, default= "Wind Speed")
         method, tech, weather, seasons = preset_dict[options]
     else:
         method, tech, weather, seasons = preset_dict[presets]
