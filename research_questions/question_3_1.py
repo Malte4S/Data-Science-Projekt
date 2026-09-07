@@ -8,12 +8,12 @@ import statsmodels.api as sm
 from datetime import date
 
 
-st.header("Interactive Visualizations")
+st.header("Interactive Sandbox")
 st.markdown(
-"The final visualization shows the correlation between the selected weather conditions and renewable energy generation.  "
+"The sandbox let's you plot correlations between the selected weather conditions and renewable energy generation.  "
 "\nEach dot represents a day in the 2023-2025 period, with the x-axis representing the meteorological condition and the y-axis representing the renewable electricity generation. "
 "\nTo interact with the graph, you can select a specific correlation method (Pearson or Spearman), a technology, and a weather variable. You can also filter the data by season to focus on specific periods of the year.  "
-"\nIt should be noted that not every possible combination of weather variable and technology will yield a statistically significant correlation, so please interpret the results with caution. **Hover over the points to see the specific period and exact values.**"
+"\nEven though this was the primary way we found relevant correlations, it should be noted that not every possible combination of weather variable and technology will yield a statistically significant correlation. **Hover over the points to see the specific period and exact values.**"
 )
 
 method = st.segmented_control("Select the Correlation Method", ["Pearson", "Spearman"], selection_mode="single", default="Pearson", required=True)
