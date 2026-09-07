@@ -15,7 +15,6 @@ q3_2 = st.Page("research_questions/question_3_2.py", title="└ Analysis of four
 pages = [overview, q1, q2, q3, q3_1, q3_2, q4, q5, q6]
 pg = st.navigation(pages, position="hidden")
 
-# 2. Build a custom sidebar exactly how you want it
 with st.sidebar:
     st.page_link(overview)
     st.page_link(q1)
@@ -30,5 +29,4 @@ with st.sidebar:
     st.page_link(q5)
     st.page_link(q6)
 
-# 3. Run the selected page
 pg.run()
