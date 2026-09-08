@@ -25,7 +25,7 @@ st.markdown(
 
 st.header("A look at the Data")
 st.markdown(
-"This section provides a visual overview of the data required to answer the research question. It comprises of two main components: Weather Data and Renewable Energy Generation Data. Each of them is fetched from 18 different countries in Europe, between 2023 and 2025, and the data is aggregated into the two relevant regions: Northern Europe and Southern Europe."
+"In the following section, we will provide a visual overview of the data required to answer the research question. It comprises of two main components: the weather data and the renewable energy generation data. Each of them was fetched from 18 different countries in Europe between 2023 and 2025, and then aggregated into the two relevant regions: Northern Europe and southern Europe."
 )
 
 #============================
@@ -61,7 +61,7 @@ for region in weather_timeseries['Region'].unique():
     
     # Verify the variable exists to prevent fatal application crashes
     if target_weather_var in region_data.columns:
-        fig_weather.add_trace(go.Scatter(
+        fig_weather.add_trace(go.Scattergl(
             x=region_data['Date'],
             y=region_data[target_weather_var],
             mode='lines',
@@ -101,9 +101,8 @@ with middle:
 
 st.subheader("Renewable Energy Generation Data")
 st.markdown(
-"The second component is then used to calculate the daily capacity factor of each region, for each technology. This is done to normalize the data, since energy production can differf significantly in scale between the two regions.  " 
-"\nThe capacity factor is then calculated as the ratio of the energy generation data, and the capacity data.  " 
-"\nFor these visualizations, you can select a specific technology, and then choose to view the data either at the regional level, or at the country level. If you select the country level, you can then choose which countries to include in the visualization. Alongside the graph, the capacity data is displayed in a table just below."
+"The second component is then used to calculate the daily capacity factor of each region, for each technology. This is done to normalize the data, since energy production can differ significantly between both regions. The capacity factor is then calculated as the ratio of the energy generation data, and the capacity data.  " 
+"\nFor these visualizations, you can select the specific technology, and then choose to view the data either at the regional or country level. If you select the country level, you can then choose which countries to include in the visualization. Alongside the graph, the capacity data is displayed in a table below."
 )
 
 active_tech = st.segmented_control("Select the Technology", ['Solar', 'Wind', 'Hydro', 'Bioenergy'], selection_mode="single", default='Solar', required=True, key="generation_data")
@@ -136,7 +135,7 @@ for entity in plot_entities:
     if not entity_data.empty:
         # Force a continuous daily calendar to break lines on missing days
         entity_data = entity_data.set_index('Date').resample('D').asfreq().reset_index()
-        fig_gen.add_trace(go.Scatter(
+        fig_gen.add_trace(go.Scattergl(
             x=entity_data['Date'],
             y=entity_data[active_tech],
             mode='lines',
@@ -182,32 +181,7 @@ for col in ['Bioenergy', 'Hydro', 'Wind', 'Solar']:
     if col in table_df.columns:
         table_df[col] = table_df[col].apply(lambda x: f"{x:,.0f} MW")
     
-# Construct the Plotly Table
-fig_table = go.Figure(data=[go.Table(
-    header=dict(
-        values=[f"<b>{col}</b>" for col in table_df.columns],
-        fill_color='rgba(0,0,0,0)',  # Fully transparent background
-        line_color='rgba(255,255,255,0.2)',  # Subtle translucent white borders
-        align='left',
-        font=dict(color='white', size=14)
-    ),
-    cells=dict(
-        values=[table_df[col] for col in table_df.columns],
-        fill_color='rgba(0,0,0,0)',  # Fully transparent background
-        line_color='rgba(255,255,255,0.2)',  # Subtle translucent white borders
-        align='left',
-        font=dict(color='white', size=12),  # Flipped to white for the dark theme
-        height=30
-    )
-)])
-
-# Table Formatting
-fig_table.update_layout(
-    title=dict(text=f"<b>Total Capacity ({view_level} View)</b>", font=dict(color='white', size=20)),
-    margin=dict(l=0, r=0, t=50, b=0),
-    height=250,
-    paper_bgcolor='rgba(0,0,0,0)',  # Makes the surrounding canvas transparent
-    plot_bgcolor='rgba(0,0,0,0)'
-)
-st.plotly_chart(fig_table, use_container_width=True)
+# Display the capacity data using a native Streamlit dataframe
+st.markdown(f"**Total Capacity ({view_level} View)**")
+st.dataframe(table_df, use_container_width=True, hide_index=True)
 
