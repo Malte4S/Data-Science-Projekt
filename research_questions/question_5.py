@@ -1,24 +1,3 @@
-"""
-Streamlit app: Global wind resource & performance choropleth map.
-
-Colors countries by either:
-  - Capacity factor (%) — how efficiently installed wind capacity is used
-  - Over-/Underperformance score — residual of capacity factor vs. what
-    would be expected given the country's mean wind speed (a simple
-    linear regression baseline). Positive = punching above its wind-speed
-    weight class (good siting/tech/grid integration); negative = below.
-
-Hover tooltip shows: mean wind speed, power density, installed capacity,
-and annual generation.
-
-Data expected at: data/Q5_Data/wind.csv
-(adjust DATA_PATH below if your filename/folder differs - this should
-match whatever your merge script, e.g. build_choropleth_map.py /
-build_full_dataset.py, wrote wind_full_dataset.csv to)
-
-Run with:  streamlit run app.py
-"""
-
 import os
 import numpy as np
 import pandas as pd
@@ -27,23 +6,14 @@ import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import streamlit as st
 
-# --------------------------------------------------------------------------
-# Config
-# --------------------------------------------------------------------------
 st.set_page_config(page_title="Global Wind Resource Map", layout="wide")
 
 DATA_PATH = os.path.join("Data", "Q5_Data", "wind.csv")
 
-
-# --------------------------------------------------------------------------
-# Data loading & scoring
-# --------------------------------------------------------------------------
 @st.cache_data
 def load():
     df = pd.read_csv(DATA_PATH)
 
-    # Over-/underperformance score: residual of capacity_factor_pct
-    # against a simple linear fit on mean wind speed at 100m.
     x = df["wind_speed_100m_mean_ms"].to_numpy()
     y = df["capacity_factor_pct"].to_numpy()
     slope, intercept = np.polyfit(x, y, 1)
@@ -54,10 +24,7 @@ def load():
 
 df = load()
 
-
-# --------------------------------------------------------------------------
 # Sidebar controls
-# --------------------------------------------------------------------------
 st.sidebar.header("Map settings")
 
 color_choice = st.sidebar.radio(
@@ -73,14 +40,10 @@ color_col = (
     else "performance_score"
 )
 
-# Diverging scale makes sense for a +/- score; sequential for capacity factor
 color_scale = "RdBu" if color_col == "performance_score" else "YlGnBu"
 color_midpoint = 0 if color_col == "performance_score" else None
 
-
-# --------------------------------------------------------------------------
 # Main title
-# --------------------------------------------------------------------------
 st.title("🌍 Global Wind Resource & Performance Map")
 st.caption(
     "Capacity factor = actual generation ÷ theoretical max generation at full capacity. "
@@ -89,9 +52,7 @@ st.caption(
 )
 
 
-# --------------------------------------------------------------------------
-# Choropleth
-# --------------------------------------------------------------------------
+# Map: capacity factor or performance score
 fig = px.choropleth(
     df,
     locations="iso_code",
@@ -140,9 +101,7 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 
 
-# --------------------------------------------------------------------------
-# Static lollipop chart: ranked performance residuals
-# --------------------------------------------------------------------------
+# lollipop chart: over vs. underperformers
 st.header("Ranked Performance Residuals")
 st.caption(
     "Regression of capacity factor on wind speed; residual = actual − expected. "
@@ -217,9 +176,7 @@ else:
     st.info("Select at least one country in either dropdown to display the chart.")
 
 
-# --------------------------------------------------------------------------
-# Interactive radar/polar chart: multi-metric country comparison
-# --------------------------------------------------------------------------
+# Interactive radar chart: multi-metric country comparison
 st.header("Multi-Metric Country Comparison (Radar Chart)")
 st.caption(
     "Each metric is min-max normalized across all countries (0 = lowest, "
@@ -292,9 +249,7 @@ else:
     st.info("Pick at least one country to display the radar chart.")
 
 
-# --------------------------------------------------------------------------
-# Supporting table (optional, sorted by chosen metric)
-# --------------------------------------------------------------------------
+# Supporting table (sorted by chosen metric)
 with st.expander("Show underlying data table"):
     st.dataframe(
         df[
