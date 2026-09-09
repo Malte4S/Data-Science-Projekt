@@ -85,7 +85,7 @@ for i, v in enumerate(diff.values):
     ax.text(i, v + (0.4 if v >= 0 else -0.4), f"{v:+.1f} %",ha="center", va="bottom" if v >= 0 else "top", fontsize=10)
 ax.axhline(0, color="black", lw=0.8)
 ax.set_axisbelow(True)
-ax.grid(True, axis="both", linestyle="--", linewidth=0.6, alpha=0.7)
+ax.grid(True, axis="y", linestyle="--", linewidth=0.6, alpha=0.7)
 
 ax.set_ylabel("Difference on heatwave days (%)")
 ax.set_ylim(min(diff.min() * 1.5, -6), max(diff.max() * 1.5, 6))
