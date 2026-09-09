@@ -8,7 +8,7 @@ st.set_page_config(
     page_title="Research Question 6",
     layout="wide"
 )
-st.title("Power Generation Volatility and Power Trade Share")
+st.title("Power Generation Volatility and Power Trade Share Volatility")
 st.write("Question: Has the growing share of weather-dependent renewable energy increased the volatility of national electricity generation during extreme weather events, \
          and to what extent do cross-border electricity imports mitigate this differently across countries?")
 
@@ -181,7 +181,7 @@ st.pyplot(fig2)
 
 st.subheader("Change in Trade Share against the Change in Generation Volatility for each Weather Event.")
 
-st.write("In this last visual we can see the Change in trading share in relation to a 'normal' weather day in comparrison to the change in generation volatility in relation to a 'normal' weather day for a selected technology type. \
+st.write("In this last visual we can see the Change in trading share volatility in relation to a 'normal' weather day in comparrison to the change in generation volatility in relation to a 'normal' weather day for a selected technology type. \
         As we can see, there does seem to be a correlation between the weather event selected and the Technology type. During a Low Solar Radiation Period we can see that the Solar Power generation Volatility as well as the Traiding share \
         Volatility in comparison to a 'normal' day drop, meaning that with the solar output becoming more stable (due to less being produced) the trading share becomes mroe stabel too. This makes sense since there is not as mcuh power to \
         trade in this situation thus there are not many chances to trade a lot of power. Similar trends can be observed for other technology types as well as, with water power being the exception, probably due to its small share in the total \
