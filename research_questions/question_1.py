@@ -1,4 +1,4 @@
-#AI-assisted code
+#AI-assisted code:
 #Debugged with Claude
 
 import matplotlib.pyplot as plt
@@ -81,6 +81,13 @@ ax.bar(TECHS, diff.values, color=[COLOR[t] for t in TECHS], width=0.55)
 for i, v in enumerate(diff.values):
     ax.text(i, v + (0.4 if v >= 0 else -0.4), f"{v:+.1f} %",ha="center", va="bottom" if v >= 0 else "top", fontsize=10)
 ax.axhline(0, color="black", lw=0.8)
+ax.grid(
+    True,
+    axis="both",
+    linestyle="--",
+    linewidth=0.6,
+    alpha=0.7
+)
 ax.set_ylabel("Difference on heatwave days (%)")
 ax.set_ylim(min(diff.min() * 1.5, -6), max(diff.max() * 1.5, 6))
 fig.tight_layout()
@@ -115,4 +122,8 @@ ax.legend(fontsize=8, loc="upper right")
 fig.tight_layout()
 st.pyplot(fig)
 st.caption("Solar output divided by radiation, normalised per year. ")
-
+plt.savefig(
+    "generation_variability_per_Renewable_share_low_solar.png",
+    dpi=300,
+    bbox_inches="tight"
+)
