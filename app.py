@@ -9,7 +9,7 @@ q5 = st.Page("research_questions/question_5.py", title="Research Question 5")
 q6 = st.Page("research_questions/question_6.py", title="Research Question 6")
 
 q3_1 = st.Page("research_questions/question_3_1.py", title="└ Interactive Visualizations")
-q3_2 = st.Page("research_questions/question_3_2.py", title="└ Analysis of four Correlations")
+q3_2 = st.Page("research_questions/question_3_2.py", title="└ Analysis of Four Correlations")
 
 
 pages = [overview, q1, q2, q3, q3_1, q3_2, q4, q5, q6]
