@@ -1,5 +1,5 @@
 # AI-assisted code
-# Used to help create the interactive part of the visualization.
+# Used to help create the interactive parts of the visualization.
 # Bar chart generated with ChatGPT and adapted by the authors.
 
 import streamlit as st
@@ -7,6 +7,7 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 
 st.set_page_config(
     page_title="Research Question 4",
@@ -26,7 +27,7 @@ st.markdown(
 )
 
 threshold = st.slider(
-    "Hydro dependency threshold (%) - countries at or above this mean hydro "
+    "Hydro dependency threshold (%): countries at or above this mean hydro "
     "share are classified as 'High Hydro Dependency', all others as "
     "'Diversified'",
     min_value=10,
@@ -101,12 +102,16 @@ fig.add_vline(
     annotation_position="top",
 )
 
+fig.update_xaxes(showgrid=True, gridcolor="rgba(0,0,0,0.1)", showline=True, linewidth=2, linecolor="black", mirror=True)
+fig.update_yaxes(showgrid=True, gridcolor="rgba(0,0,0,0.1)", showline=True, linewidth=2, linecolor="black", mirror=True)
+
 fig.update_layout(
     legend_title_text="",
     height=600,
+    template="plotly_white",
 )
 
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, use_container_width=True, key="bubble_chart")
 
 st.caption(
     "Bubble size: scales with the number of drought years the country "
@@ -244,8 +249,8 @@ ax.legend(
 
 ax.grid(
     True,
-    axis="y",
-    color="#eeeeee",
+    axis="both",
+    color="#dddddd",
     linewidth=0.8
 )
 
@@ -253,10 +258,146 @@ ax.set_axisbelow(True)
 
 ax.set_ylim(0, 75)
 
-for spine in ["top", "right"]:
-    ax.spines[spine].set_visible(False)
+for spine in ["top", "right", "left", "bottom"]:
+    ax.spines[spine].set_visible(True)
+    ax.spines[spine].set_color("black")
+    ax.spines[spine].set_linewidth(1.2)
 
 st.pyplot(
     fig,
     use_container_width=True
+)
+
+'''
+Time series per country: hydro vs. fossil share, with drought years highlighted.
+'''
+
+HYDRO_COLOR = "#1F6F8B"
+FOSSIL_COLOR = "#B5562E"
+DROUGHT_BAND_COLOR = "rgba(217, 199, 154, 0.55)"
+DROUGHT_THRESHOLD = -1.0  
+
+def drought_bands(rows):
+    """Groups consecutive drought years into bands for shading."""
+    bands = []
+    start = None
+    prev_year = None
+    for _, r in rows.iterrows():
+        if r["drought"]:
+            if start is None:
+                start = r["year"]
+        elif start is not None:
+            bands.append((start, prev_year))
+            start = None
+        prev_year = r["year"]
+    if start is not None:
+        bands.append((start, prev_year))
+    return bands
+
+def pct(x):
+    return f"{x * 100:.1f}%"
+
+st.title("Where Does the Electricity Come From When Drought Hits?")
+st.subheader("Time Series by Country")
+st.write(
+    f"Hydro and fossil fuel share of electricity generation. Shaded areas "
+    f"mark drought years (SPEI-12 < {DROUGHT_THRESHOLD})."
+)
+
+countries = sorted(df["country"].unique())
+
+mean_hydro_by_country = df.groupby("country")["hydro_share"].mean()
+hydro_heavy = set(mean_hydro_by_country[mean_hydro_by_country >= 0.40].index)
+
+default_index = countries.index("Norway") if "Norway" in countries else 0
+country_selected = st.selectbox(
+    "Select country",
+    countries,
+    index=default_index,
+    format_func=lambda c: f"{c} ~" if c in hydro_heavy else c,
+    key="timeseries_country_select",
+)
+st.caption("~ = hydro plays a larger role here (>= 40% mean share)")
+
+rows = df[df["country"] == country_selected].sort_values("year").reset_index(drop=True)
+bands = drought_bands(rows)
+
+fig_ts = go.Figure()
+
+for start, end in bands:
+    fig_ts.add_vrect(
+        x0=start - 0.5,
+        x1=end + 0.5,
+        fillcolor=DROUGHT_BAND_COLOR,
+        line_width=0,
+        layer="below",
+    )
+
+fig_ts.add_trace(
+    go.Scatter(
+        x=rows["year"],
+        y=rows["hydro_share"],
+        mode="lines+markers",
+        name="Hydro",
+        line=dict(color=HYDRO_COLOR, width=2.5),
+        marker=dict(size=6),
+        customdata=rows[["spei_12", "drought"]],
+        hovertemplate=(
+            "Year %{x}<br>Hydro: %{y:.1%}<br>SPEI-12: %{customdata[0]:.2f}<extra></extra>"
+        ),
+    )
+)
+
+fig_ts.add_trace(
+    go.Scatter(
+        x=rows["year"],
+        y=rows["fossil_share"],
+        mode="lines+markers",
+        name="Fossil (Coal+Gas+Oil)",
+        line=dict(color=FOSSIL_COLOR, width=2.5),
+        marker=dict(size=6),
+        hovertemplate="Year %{x}<br>Fossil: %{y:.1%}<extra></extra>",
+    )
+)
+
+fig_ts.update_layout(
+    template="plotly_white",
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+    margin=dict(l=10, r=10, t=40, b=10),
+    height=420,
+)
+
+fig_ts.update_xaxes(title=None, dtick=1, showgrid=True, gridcolor="rgba(0,0,0,0.1)", showline=True, linewidth=2, linecolor="black", mirror=True)
+fig_ts.update_yaxes(title=None, tickformat=".0%", showgrid=True, gridcolor="rgba(0,0,0,0.1)", showline=True, linewidth=2, linecolor="black", mirror=True)
+
+st.plotly_chart(fig_ts, use_container_width=True, key="timeseries_chart")
+
+drought_rows = rows[rows["drought"]]
+normal_rows = rows[~rows["drought"]]
+
+avg_hydro_drought = drought_rows["hydro_share"].mean() if len(drought_rows) else 0
+avg_hydro_normal = normal_rows["hydro_share"].mean() if len(normal_rows) else 0
+avg_fossil_drought = drought_rows["fossil_share"].mean() if len(drought_rows) else 0
+avg_fossil_normal = normal_rows["fossil_share"].mean() if len(normal_rows) else 0
+
+hydro_delta = avg_hydro_drought - avg_hydro_normal
+fossil_delta = avg_fossil_drought - avg_fossil_normal
+
+col1, col2 = st.columns(2)
+with col1:
+    st.metric(
+        "Hydro, Drought vs. Normal Years",
+        f"{pct(avg_hydro_drought)}",
+        f"{hydro_delta * 100:+.1f} pts vs. {pct(avg_hydro_normal)}",
+    )
+with col2:
+    st.metric(
+        "Fossil, Drought vs. Normal Years",
+        f"{pct(avg_fossil_drought)}",
+        f"{fossil_delta * 100:+.1f} pts vs. {pct(avg_fossil_normal)}",
+        delta_color="inverse",
+    )
+
+st.caption(
+    f"{len(drought_rows)} drought years - {len(normal_rows)} normal years in the dataset (2005-2023)"
 )
