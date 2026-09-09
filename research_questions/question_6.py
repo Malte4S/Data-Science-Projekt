@@ -26,7 +26,7 @@ st.write("First we where interested in how the Prices of the Bidding Zones of ou
          substantial impact upon the price volatility, there is no clear pattern in the price volatility when comparing the years, countries and event types. Finnland seems to be the most apparent outlier here, since the Bidding Zone Price reacts \
          unusually strong to low wind events with a up to 85% deviation from its ususal volatility.")
 
-df_volatility = pd.read_csv("./data/Q2_Data/Price_Volatility_Renewshare_Month.csv")
+df_volatility = pd.read_csv("./data/Q6_Data/Price_Volatility_Renewshare_Month.csv")
 
 event_names = {
     "high_heat": "Heatwave",
@@ -118,7 +118,7 @@ st.write("For the next Visualisation we where interested in the actual connectio
         an extrem weather event doesnt necessearily ensure a higher price volatility for countries that are more reliant on renwable energy then fossil based once. But it can be seen, that countries with a higher renewable share have a potentially larger range \
          for their price volatility. While they are mostly in the same range as fossil based countries, they are also the once experiencing the highest peaks in price volatility.")
 
-df_volatility_renew = pd.read_csv("./data/Q2_Data/Price_Volatility_Renewshare_Test.csv")
+df_volatility_renew = pd.read_csv("./data/Q6_Data/Price_Volatility_Renewshare_Test.csv")
 
 df_volatility_renew["event_name"] = df_volatility_renew["event_type"].map(event_names)
 
@@ -218,7 +218,7 @@ st.write("During our Datarefinment we made an interesting discovery. Before the 
          suddenly seems to be linked to the seasons for some of the countries. The seasons are shown here by the maximum temperature over the years. While we are not sure why that is, we theorize that this could be due to missing imports from earlier trade partners which guarenteed \
          a stable supply of electricity or resources before 2022.")
 
-df_volatility_country = pd.read_csv("./data/Q2_Data/Price_Volatitily_with_weather.csv")
+df_volatility_country = pd.read_csv("./data/Q6_Data/Price_Volatitily_with_weather.csv")
 
 country_names = {
     "FI": "Finland",
