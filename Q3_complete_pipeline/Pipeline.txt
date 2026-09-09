@@ -1,0 +1,55 @@
+================================================================================
+EUROPEAN RENEWABLE ENERGY & WEATHER DATA PIPELINE (2023-2025)
+================================================================================
+
+PHASE 1: SPATIAL MAPPING & WEATHER EXTRACTION
+--------------------------------------------------------------------------------
+1. Manual Pre-Processing (GEM Trackers)
+   - Process: Filter GEM trackers for operational/retired facilities via Excel.
+   - Output: Independent files for Solar, Wind, Hydro, and Bioenergy.
+   - Format: [Country, Capacity (MW), Status, Start Year, Retired Year, Latitude, Longitude]
+
+2. Spatial Clustering (EA_Grid.py)
+   - Process: Applies Equal-Area cosine correction to coordinates (111km x 111km grid). Filters for active facilities between 2023-2025.
+   - Output: European_Renewable_Cluster.csv
+   - Format: [Region, Technology, Country, Year, Latitude_Round, Longitude_Round, Total_Capacity]
+
+3. Weather Data Fetching (OpenMeteo_API.py)
+   - Process: Identifies unique grid coordinates to minimize API calls. Fetches daily/hourly meteorological variables and aggregates hourly data into daily averages.
+   - Output: European_Weather_Data_2023_2025.csv
+   - Format: [Lat_Rounded, Lon_Rounded, time, shortwave_radiation_sum, temperature_2m_max, wind_gusts_10m_max, precipitation_sum, apparent_temperature_min, wind_speed_100m, wind_speed_100m_cubed, snow_depth]
+
+4. Weather Capacity-Weighting (Regional_Weighted_Weather.py)
+   - Process: Merges weather data with the spatial grid. Multiplies weather variables by local technology-specific capacity, sums them by region, and divides by the total regional capacity.
+   - Output: Regional_Weighted_Weather_2023_2025.csv
+   - Format: [Region, Date, Wind_Speed_100m, Wind_Speed_100m_Cubed, Wind_Gusts_10m_Max, Shortwave_Radiation_Sum, Precipitation_Sum, Snow_Depth, Temperature_2m_Max, Apparent_Temperature_Min]
+
+
+PHASE 2: GENERATION & CAPACITY EXTRACTION
+--------------------------------------------------------------------------------
+5. National Energy Fetching (EnergyChart_API.py)
+   - Process: Pulls raw generation and capacity telemetry via API.
+   - Output A (Dir): Renewable_Generation_By_Country/ [Time (Local), Bioenergy, Hydro, Wind, Solar]
+   - Output B (Dir): Installed_Capacity_By_Country/ [Year, Bioenergy, Hydro, Wind, Solar]
+
+6. Generation Normalization (Daily_Data.py)
+   - Process: Identifies telemetry intervals (15, 30, or 60 min). Converts MW to MWh and aggregates into daily totals. 
+   - Constraint: Discards days with fewer than 22 hours of valid telemetry to prevent skewed data.
+   - Output (Dir): Daily_Generation_MWh/ [Country, Date, Bioenergy, Hydro, Wind, Solar]
+
+7. Capacity Baseline Estimation (GEM_Sum.py)
+   - Process: Aggregates the original GEM files to determine total national capacity baselines per technology, per year.
+   - Output: GEM_Estimated_Capacities_2023_2025.csv
+   - Format: [Country, Year, Bioenergy, Hydro, Solar, Wind]
+
+
+PHASE 3: VALIDATION & FINAL AGGREGATION
+--------------------------------------------------------------------------------
+8. Capacity Validation (Capacity_Ceiling.py)
+   - Process: Compares official EnergyCharts capacity against GEM estimations. Retains the maximum value to correct underreported national data.
+   - Output (Dir): Final_Validated_Capacity/ [Year, Bioenergy, Hydro, Wind, Solar]
+
+9. Master Aggregation (Aggregator.py)
+   - Process: Merges all country-level files from the output directories into the final project master files.
+   - Output A: European_Daily_Generation_2023_2025.csv [Region, Country, Date, Bioenergy, Hydro, Wind, Solar]
+   - Output B: European_Validated_Capacity_2023_2025.csv [Region, Country, Year, Bioenergy, Hydro, Wind, Solar]

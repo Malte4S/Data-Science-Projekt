@@ -1,0 +1,127 @@
+--- Starting Energy-Charts API Fetch (Hardened Taxonomy) ---
+
+Processing Denmark (DK)...
+  -> Saved Denmark Capacity data (Converted GW to MW).
+  [Success] Generation 2023: Fetched 8760 raw rows (MW).
+  [Success] Generation 2024: Fetched 8784 raw rows (MW).
+  [Success] Generation 2025: Fetched 8760 raw rows (MW).
+  -> Saved Denmark aggregated generation data to disk: 26304 total rows.
+
+Processing Sweden (SE)...
+  -> Saved Sweden Capacity data (Converted GW to MW).
+  [Success] Generation 2023: Fetched 8760 raw rows (MW).
+  [Success] Generation 2024: Fetched 8784 raw rows (MW).
+  [Success] Generation 2025: Fetched 8760 raw rows (MW).
+  -> Saved Sweden aggregated generation data to disk: 26304 total rows.
+
+Processing Finland (FI)...
+  -> Saved Finland Capacity data (Converted GW to MW).
+  [Success] Generation 2023: Fetched 8760 raw rows (MW).
+  [Success] Generation 2024: Fetched 35136 raw rows (MW).
+  [Success] Generation 2025: Fetched 35040 raw rows (MW).
+  -> Saved Finland aggregated generation data to disk: 78936 total rows.
+
+Processing Lithuania (LT)...
+  -> Saved Lithuania Capacity data (Converted GW to MW).
+  [Success] Generation 2023: Fetched 8760 raw rows (MW).
+  [Success] Generation 2024: Fetched 8784 raw rows (MW).
+  [Success] Generation 2025: Fetched 8760 raw rows (MW).
+  -> Saved Lithuania aggregated generation data to disk: 26304 total rows.
+
+Processing Ireland (IE)...
+  -> Saved Ireland Capacity data (Converted GW to MW).
+  [Success] Generation 2023: Fetched 17520 raw rows (MW).
+  [Success] Generation 2024: Fetched 17568 raw rows (MW).
+  [Success] Generation 2025: Fetched 17520 raw rows (MW).
+  -> Saved Ireland aggregated generation data to disk: 52608 total rows.
+
+Processing Estonia (EE)...
+  -> Saved Estonia Capacity data (Converted GW to MW).
+  [Success] Generation 2023: Fetched 8760 raw rows (MW).
+  [Success] Generation 2024: Fetched 8784 raw rows (MW).
+  [Success] Generation 2025: Fetched 8760 raw rows (MW).
+  -> Saved Estonia aggregated generation data to disk: 26304 total rows.
+
+Processing Latvia (LV)...
+  -> Saved Latvia Capacity data (Converted GW to MW).
+  [Success] Generation 2023: Fetched 8760 raw rows (MW).
+  [Success] Generation 2024: Fetched 8784 raw rows (MW).
+  [Success] Generation 2025: Fetched 8760 raw rows (MW).
+  -> Saved Latvia aggregated generation data to disk: 26304 total rows.
+
+Processing Norway (NO)...
+  -> Saved Norway Capacity data (Converted GW to MW).
+  [Success] Generation 2023: Fetched 8760 raw rows (MW).
+  [Success] Generation 2024: Fetched 8784 raw rows (MW).
+  [Success] Generation 2025: Fetched 8760 raw rows (MW).
+  -> Saved Norway aggregated generation data to disk: 26304 total rows.
+
+Processing Portugal (PT)...
+  -> Saved Portugal Capacity data (Converted GW to MW).
+  [Success] Generation 2023: Fetched 8760 raw rows (MW).
+  [Success] Generation 2024: Fetched 8784 raw rows (MW).
+  [Success] Generation 2025: Fetched 8760 raw rows (MW).
+  -> Saved Portugal aggregated generation data to disk: 26304 total rows.
+
+Processing Italy (IT)...
+  -> Saved Italy Capacity data (Converted GW to MW).
+  [Success] Generation 2023: Fetched 8760 raw rows (MW).
+  [Success] Generation 2024: Fetched 8784 raw rows (MW).
+  [Success] Generation 2025: Fetched 8760 raw rows (MW).
+  -> Saved Italy aggregated generation data to disk: 26304 total rows.
+
+Processing Spain (ES)...
+  -> Saved Spain Capacity data (Converted GW to MW).
+  [Success] Generation 2023: Fetched 35040 raw rows (MW).
+  [Success] Generation 2024: Fetched 35136 raw rows (MW).
+  [Success] Generation 2025: Fetched 35040 raw rows (MW).
+  -> Saved Spain aggregated generation data to disk: 105216 total rows.
+
+Processing Serbia (RS)...
+  -> Saved Serbia Capacity data (Converted GW to MW).
+  [Success] Generation 2023: Fetched 8760 raw rows (MW).
+  [Success] Generation 2024: Fetched 8784 raw rows (MW).
+  [Success] Generation 2025: Fetched 8760 raw rows (MW).
+  -> Saved Serbia aggregated generation data to disk: 26304 total rows.
+
+Processing Croatia (HR)...
+  -> Saved Croatia Capacity data (Converted GW to MW).
+  [Success] Generation 2023: Fetched 8760 raw rows (MW).
+  [Success] Generation 2024: Fetched 8784 raw rows (MW).
+  [Success] Generation 2025: Fetched 35040 raw rows (MW).
+  -> Saved Croatia aggregated generation data to disk: 52584 total rows.
+
+Processing Bosnia and Herzegovina (BA)...
+  -> Saved Bosnia and Herzegovina Capacity data (Converted GW to MW).
+  [Success] Generation 2023: Fetched 8760 raw rows (MW).
+  [Success] Generation 2024: Fetched 8784 raw rows (MW).
+  [Success] Generation 2025: Fetched 8760 raw rows (MW).
+  -> Saved Bosnia and Herzegovina aggregated generation data to disk: 26304 total rows.
+
+Processing Greece (GR)...
+  -> Saved Greece Capacity data (Converted GW to MW).
+  [Success] Generation 2023: Fetched 8760 raw rows (MW).
+  [Success] Generation 2024: Fetched 8784 raw rows (MW).
+  [Success] Generation 2025: Fetched 8760 raw rows (MW).
+  -> Saved Greece aggregated generation data to disk: 26304 total rows.
+
+Processing Montenegro (ME)...
+  -> Saved Montenegro Capacity data (Converted GW to MW).
+  [Success] Generation 2023: Fetched 8449 raw rows (MW).
+  [Success] Generation 2024: Fetched 7603 raw rows (MW).
+  [Success] Generation 2025: Fetched 3622 raw rows (MW).
+  -> Saved Montenegro aggregated generation data to disk: 19674 total rows.
+
+Processing Slovenia (SI)...
+  -> Saved Slovenia Capacity data (Converted GW to MW).
+  [Success] Generation 2023: Fetched 8760 raw rows (MW).
+  [Success] Generation 2024: Fetched 8784 raw rows (MW).
+  [Success] Generation 2025: Fetched 8760 raw rows (MW).
+  -> Saved Slovenia aggregated generation data to disk: 26304 total rows.
+
+Processing North Macedonia (MK)...
+  -> Saved North Macedonia Capacity data (Converted GW to MW).
+  [Success] Generation 2023: Fetched 8760 raw rows (MW).
+  [Success] Generation 2024: Fetched 8760 raw rows (MW).
+  [Success] Generation 2025: Fetched 8760 raw rows (MW).
+  -> Saved North Macedonia aggregated generation data to disk: 26280 total rows.
