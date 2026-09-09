@@ -1,28 +1,27 @@
-import os
+#AI-assisted code
+#Debugged with Claude
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import streamlit as st
+from scipy import stats
 
 st.set_page_config(page_title="Global Wind Resource Map", layout="wide")
 
-DATA_PATH = os.path.join("Data", "Q5_Data", "wind.csv")
+df = pd.read_csv("./data/Q5_Data/wind.csv")
 
-@st.cache_data
-def load():
-    df = pd.read_csv(DATA_PATH)
+reg_data = df.dropna(subset=["wind_speed_100m_mean_ms", "capacity_factor_pct"])
 
-    x = df["wind_speed_100m_mean_ms"].to_numpy()
-    y = df["capacity_factor_pct"].to_numpy()
-    slope, intercept = np.polyfit(x, y, 1)
-    df["performance_score"] = y - (slope * x + intercept)
+slope, intercept, r_value, p_value, std_err = stats.linregress(
+    reg_data["wind_speed_100m_mean_ms"],
+    reg_data["capacity_factor_pct"],
+)
 
-    return df
-
-
-df = load()
+df["expected_capacity_factor"] = intercept + slope * df["wind_speed_100m_mean_ms"]
+df["performance_score"] = df["capacity_factor_pct"] - df["expected_capacity_factor"]
 
 # Sidebar controls
 st.sidebar.header("Map settings")
