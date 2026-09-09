@@ -20,13 +20,14 @@ with st.sidebar:
     st.page_link(q1)
     st.page_link(q2)
     st.page_link(q3)
-    
-    if pg in [q3, q3_1, q3_2]:
-        st.page_link(q3_1)
-        st.page_link(q3_2)
-   
+    sub_menu = st.empty()
     st.page_link(q4)
     st.page_link(q5)
     st.page_link(q6)
+
+if pg in [q3, q3_1, q3_2]:
+    with sub_menu.container():
+        st.page_link(q3_1)
+        st.page_link(q3_2)
 
 pg.run()
