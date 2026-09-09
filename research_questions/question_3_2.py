@@ -44,11 +44,11 @@ elif st.session_state.preset == "Bioenergy":
     )
 
 preset_dict = {
-    "Spring": ("Spearman", "Solar", "Snow_Depth", ["Summer", "Autumn", "Winter"]),
+    "Spring": ("Spearman", "Solar", "Snow_Depth", ["Spring"]),
     "Wind": ("Pearson", "Wind", "Wind_Speed_100m",["Spring", "Summer", "Autumn", "Winter"]),
-    "Wind": ("Spearman", "Hydro", "Wind_Speed_100m",["Winter"]),
+    "Wind Speed": ("Spearman", "Hydro", "Wind_Speed_100m",["Winter"]),
     "Bioenergy": ("Spearman", "Bioenergy", "Apparent_Temperature_Min", ["Spring", "Summer", "Autumn", "Winter"]),
-    "Rest of the Year": ("Spearman", "Solar", "Snow_Depth", ["Spring"]),
+    "Rest of the Year": ("Spearman", "Solar", "Snow_Depth", ["Summer", "Autumn", "Winter"]),
     "Precipitation": ("Spearman", "Hydro", "Precipitation_Sum",["Winter"])
 }
 
@@ -60,7 +60,7 @@ if presets is not None:
         options = st.segmented_control("Select a Preset", ["Spring","Rest of the Year"], selection_mode="single", required=True, default= "Spring")
         method, tech, weather, seasons = preset_dict[options]
     elif presets == "Hydro":
-        options = st.segmented_control("Select a Preset", ["Wind","Precipitation"], selection_mode="single", required=True, default= "Wind")
+        options = st.segmented_control("Select a Preset", ["Wind Speed","Precipitation"], selection_mode="single", required=True, default= "Wind Speed")
         method, tech, weather, seasons = preset_dict[options]
     else:
         method, tech, weather, seasons = preset_dict[presets]
