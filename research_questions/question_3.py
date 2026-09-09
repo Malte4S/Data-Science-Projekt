@@ -22,7 +22,7 @@ st.write(
 st.subheader("Methodology")
 st.markdown(
 "First we identified the relevant energy types, time frame, and countries we would consider for this analysis. In the end, we narrowed it down to four energy types, 18 countries from both regions (a list of which is available in the coming visualizations), and a time frame of 2023 to 2025. The following sources were utilized:  "
-"\nOpen-Meteo API: This provided the relevant weather data for select variables, such as shortwave radition, or wind speed. For this specific question, the data was fetched from selected coordinate clusters to minimize API calls. "
+"\nOpen-Meteo API: This provided the relevant weather data for select variables, such as shortwave radition, or wind speed. For this specific question, the data was fetched from selected coordinate clusters to minimize API calls.  "
 "\nEnergy Charts API: This provided energy generation as well as yearly capacity data for the selected countries, which was used to calculate the capacity factor.  "
 "\nGlobal Energy Monitor: Lastly, this source provided the relevant locations and coordinates used to cluster and weight the relevant weather data per energy type."    
 )
