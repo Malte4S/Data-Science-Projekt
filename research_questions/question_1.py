@@ -57,6 +57,9 @@ ax.xaxis.set_major_locator(mdates.MonthLocator())
 ax.xaxis.set_major_formatter(mdates.DateFormatter("%b"))
 ax2 = ax.twinx()
 
+ax.set_axisbelow(True)
+ax.grid(True, axis="y", linestyle="--", linewidth=0.6, alpha=0.7)
+
 for tech in TECHS:
     ax2.plot(s.index, s[tech] / 1000, color=COLOR[tech], lw=1, label=tech)
 ax2.set_ylabel("GWh/day")
@@ -81,19 +84,20 @@ ax.bar(TECHS, diff.values, color=[COLOR[t] for t in TECHS], width=0.55)
 for i, v in enumerate(diff.values):
     ax.text(i, v + (0.4 if v >= 0 else -0.4), f"{v:+.1f} %",ha="center", va="bottom" if v >= 0 else "top", fontsize=10)
 ax.axhline(0, color="black", lw=0.8)
-ax.grid(
-    True,
-    axis="both",
-    linestyle="--",
-    linewidth=0.6,
-    alpha=0.7
-)
+ax.set_axisbelow(True)
+ax.grid(True, axis="y", linestyle="--", linewidth=0.6, alpha=0.7)
+
 ax.set_ylabel("Difference on heatwave days (%)")
 ax.set_ylim(min(diff.min() * 1.5, -6), max(diff.max() * 1.5, 6))
 fig.tight_layout()
 st.pyplot(fig)
 st.caption("Average output on heatwave days compared to other July/August days of the same year. "
            "Each day gets divided by its own year average to remove the effect of the increased capacity over time.")
+plt.savefig(
+    "Solar, Hydro.png",
+    dpi=300,
+    bbox_inches="tight"
+)
 
 
 st.subheader("Temperature effect on solar modules") #graph 3 interactive
@@ -119,11 +123,9 @@ ax.set_xlabel("Tmax (°C)")
 ax.set_ylabel("Yield per solar radiation")
 ax.legend(fontsize=8, loc="upper right")
 
+ax.set_axisbelow(True)
+ax.grid(True, axis="y", linestyle="--", linewidth=0.6, alpha=0.7)
+
 fig.tight_layout()
 st.pyplot(fig)
 st.caption("Solar output divided by radiation, normalised per year. ")
-plt.savefig(
-    "generation_variability_per_Renewable_share_low_solar.png",
-    dpi=300,
-    bbox_inches="tight"
-)
