@@ -1,3 +1,25 @@
+"""
+Streamlit app: Global wind resource & performance choropleth map.
+
+Colors countries by either:
+  - Capacity factor (%) — how efficiently installed wind capacity is used
+  - Over-/Underperformance score — residual of capacity factor vs. what
+    would be expected given the country's mean wind speed (a simple
+    linear regression baseline). Positive = punching above its wind-speed
+    weight class (good siting/tech/grid integration); negative = below.
+
+Hover tooltip shows: mean wind speed, power density, installed capacity,
+and annual generation.
+
+Data expected at: data/Q5_Data/wind.csv
+(adjust DATA_PATH below if your filename/folder differs - this should
+match whatever your merge script, e.g. build_choropleth_map.py /
+build_full_dataset.py, wrote wind_full_dataset.csv to)
+
+Run with:  streamlit run app.py
+"""
+
+import os
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -5,9 +27,23 @@ import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import streamlit as st
 
+# --------------------------------------------------------------------------
+# Config
+# --------------------------------------------------------------------------
+st.set_page_config(page_title="Global Wind Resource Map", layout="wide")
+
+DATA_PATH = os.path.join("Data", "Q5_Data", "wind.csv")
+
+
+# --------------------------------------------------------------------------
+# Data loading & scoring
+# --------------------------------------------------------------------------
 @st.cache_data
 def load():
-    df = pd.read_csv("data/Q5_Data/wind.csv")
+    df = pd.read_csv(DATA_PATH)
+
+    # Over-/underperformance score: residual of capacity_factor_pct
+    # against a simple linear fit on mean wind speed at 100m.
     x = df["wind_speed_100m_mean_ms"].to_numpy()
     y = df["capacity_factor_pct"].to_numpy()
     slope, intercept = np.polyfit(x, y, 1)
@@ -18,7 +54,10 @@ def load():
 
 df = load()
 
+
+# --------------------------------------------------------------------------
 # Sidebar controls
+# --------------------------------------------------------------------------
 st.sidebar.header("Map settings")
 
 color_choice = st.sidebar.radio(
@@ -34,10 +73,14 @@ color_col = (
     else "performance_score"
 )
 
+# Diverging scale makes sense for a +/- score; sequential for capacity factor
 color_scale = "RdBu" if color_col == "performance_score" else "YlGnBu"
 color_midpoint = 0 if color_col == "performance_score" else None
 
+
+# --------------------------------------------------------------------------
 # Main title
+# --------------------------------------------------------------------------
 st.title("🌍 Global Wind Resource & Performance Map")
 st.caption(
     "Capacity factor = actual generation ÷ theoretical max generation at full capacity. "
@@ -45,6 +88,10 @@ st.caption(
     "from the country's mean wind speed alone (positive = overperforming its wind resource)."
 )
 
+
+# --------------------------------------------------------------------------
+# Choropleth
+# --------------------------------------------------------------------------
 fig = px.choropleth(
     df,
     locations="iso_code",
@@ -71,7 +118,15 @@ fig = px.choropleth(
     projection="natural earth",
 )
 
-fig.update_geos(showcountries=True, countrycolor="lightgray", showcoastlines=False)
+fig.update_geos(
+    showcountries=True,
+    countrycolor="lightgray",
+    showcoastlines=False,
+    lataxis_showgrid=True,
+    lataxis_gridcolor="lightgray",
+    lonaxis_showgrid=True,
+    lonaxis_gridcolor="lightgray",
+)
 fig.update_layout(
     margin=dict(l=0, r=0, t=10, b=0),
     height=600,
@@ -84,60 +139,101 @@ fig.update_layout(
 
 st.plotly_chart(fig, use_container_width=True)
 
+
+# --------------------------------------------------------------------------
+# Static lollipop chart: ranked performance residuals
+# --------------------------------------------------------------------------
 st.header("Ranked Performance Residuals")
 st.caption(
     "Regression of capacity factor on wind speed; residual = actual − expected. "
-    "Positive bars = overperformers, negative = underperformers."
+    "Positive bars = overperformers, negative = underperformers. "
+    "By default, the top 3 over- and underperformers are shown - use the "
+    "dropdowns to add or remove countries."
 )
 
 COLOR_OVER = "#1f77b4"
 COLOR_UNDER = "#d62728"
 
-df_sorted = df.dropna(subset=["performance_score"]).sort_values(
+df_perf = df.dropna(subset=["performance_score"])
+
+overperformers_sorted = df_perf[df_perf["performance_score"] > 0].sort_values(
+    "performance_score", ascending=False
+)
+underperformers_sorted = df_perf[df_perf["performance_score"] < 0].sort_values(
     "performance_score", ascending=True
-).reset_index(drop=True)
-colors = [COLOR_OVER if v >= 0 else COLOR_UNDER for v in df_sorted["performance_score"]]
+)
 
-fig_lollipop, ax = plt.subplots(figsize=(9, max(6, 0.35 * len(df_sorted))))
-y_pos = np.arange(len(df_sorted))
+col_over, col_under = st.columns(2)
+with col_over:
+    selected_over = st.multiselect(
+        "Overperforming countries",
+        options=overperformers_sorted["country"].tolist(),
+        default=overperformers_sorted["country"].head(3).tolist(),
+        key="lollipop_overperformers",
+    )
+with col_under:
+    selected_under = st.multiselect(
+        "Underperforming countries",
+        options=underperformers_sorted["country"].tolist(),
+        default=underperformers_sorted["country"].head(3).tolist(),
+        key="lollipop_underperformers",
+    )
 
-ax.hlines(y=y_pos, xmin=0, xmax=df_sorted["performance_score"], color=colors, linewidth=2, zorder=2)
-ax.scatter(df_sorted["performance_score"], y_pos, color=colors, s=90, zorder=3, edgecolor="white", linewidth=0.8)
+selected_countries = selected_over + selected_under
 
-for yi, val in zip(y_pos, df_sorted["performance_score"]):
-    offset = 0.3 if val >= 0 else -0.3
-    ha = "left" if val >= 0 else "right"
-    ax.text(val + offset, yi, f"{val:+.1f}", va="center", ha=ha, fontsize=9)
+if selected_countries:
+    df_sorted = df_perf[df_perf["country"].isin(selected_countries)].sort_values(
+        "performance_score", ascending=True
+    ).reset_index(drop=True)
+    colors = [COLOR_OVER if v >= 0 else COLOR_UNDER for v in df_sorted["performance_score"]]
 
-ax.axvline(0, color="black", linewidth=1, zorder=1)
-ax.set_yticks(y_pos)
-ax.set_yticklabels(df_sorted["country"], fontsize=10)
-ax.set_xlabel("Performance residual (percentage points, actual − expected capacity factor)")
-ax.set_title("Wind Capacity Factor: Over- vs. Underperformance Relative to Wind Speed", fontsize=13, fontweight="bold", pad=15)
+    fig_lollipop, ax = plt.subplots(figsize=(9, max(4, 0.5 * len(df_sorted))))
+    y_pos = np.arange(len(df_sorted))
 
-overperform_patch = plt.Line2D([0], [0], marker="o", color=COLOR_OVER, linestyle="-", label="Overperformer")
-underperform_patch = plt.Line2D([0], [0], marker="o", color=COLOR_UNDER, linestyle="-", label="Underperformer")
-ax.legend(handles=[overperform_patch, underperform_patch], loc="lower right", frameon=False)
+    ax.hlines(y=y_pos, xmin=0, xmax=df_sorted["performance_score"], color=colors, linewidth=2, zorder=2)
+    ax.scatter(df_sorted["performance_score"], y_pos, color=colors, s=90, zorder=3, edgecolor="white", linewidth=0.8)
 
-ax.spines[["top", "right"]].set_visible(False)
-ax.grid(axis="x", linestyle="--", alpha=0.4, zorder=0)
-plt.tight_layout()
+    for yi, val in zip(y_pos, df_sorted["performance_score"]):
+        offset = 0.3 if val >= 0 else -0.3
+        ha = "left" if val >= 0 else "right"
+        ax.text(val + offset, yi, f"{val:+.1f}", va="center", ha=ha, fontsize=9)
 
-st.pyplot(fig_lollipop)
+    ax.axvline(0, color="black", linewidth=1, zorder=1)
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(df_sorted["country"], fontsize=10)
+    ax.set_xlabel("Performance residual (percentage points, actual − expected capacity factor)")
+    ax.set_title("Wind Capacity Factor: Over- vs. Underperformance Relative to Wind Speed", fontsize=13, fontweight="bold", pad=15)
 
+    overperform_patch = plt.Line2D([0], [0], marker="o", color=COLOR_OVER, linestyle="-", label="Overperformer")
+    underperform_patch = plt.Line2D([0], [0], marker="o", color=COLOR_UNDER, linestyle="-", label="Underperformer")
+    ax.legend(handles=[overperform_patch, underperform_patch], loc="lower right", frameon=False)
+
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.grid(axis="both", linestyle="--", alpha=0.4, zorder=0)
+    plt.tight_layout()
+
+    st.pyplot(fig_lollipop)
+else:
+    st.info("Select at least one country in either dropdown to display the chart.")
+
+
+# --------------------------------------------------------------------------
+# Interactive radar/polar chart: multi-metric country comparison
+# --------------------------------------------------------------------------
 st.header("Multi-Metric Country Comparison (Radar Chart)")
 st.caption(
     "Each metric is min-max normalized across all countries (0 = lowest, "
-    "1 = highest) so wind speed, power density, capacity, generation, and "
-    "capacity factor can share one axis scale. Hover shows the real values."
+    "1 = highest) so wind speed (m/s), power density (W/m²), installed "
+    "capacity (GW), generation (TWh), and capacity factor (%) can share one "
+    "axis scale. Hover over a point to see the real, non-normalized value."
 )
 
 RADAR_METRICS = {
-    "Mean wind speed": "wind_speed_100m_mean_ms",
-    "Mean power density": "power_density_100m_mean_wm2",
-    "Installed capacity": "wind_capacity_gw",
-    "Generation": "wind_generation_twh",
-    "Capacity factor": "capacity_factor_pct",
+    "Mean wind speed (m/s)": "wind_speed_100m_mean_ms",
+    "Mean power density (W/m²)": "power_density_100m_mean_wm2",
+    "Installed capacity (GW)": "wind_capacity_gw",
+    "Generation (TWh)": "wind_generation_twh",
+    "Capacity factor (%)": "capacity_factor_pct",
 }
 
 default_countries = (
@@ -182,7 +278,10 @@ if selected_countries:
         )
 
     fig_radar.update_layout(
-        polar=dict(radialaxis=dict(visible=True, range=[0, 1])),
+        polar=dict(
+            radialaxis=dict(visible=True, range=[0, 1], showgrid=True, gridcolor="lightgray"),
+            angularaxis=dict(showgrid=True, gridcolor="lightgray"),
+        ),
         height=550,
         margin=dict(l=40, r=40, t=30, b=30),
         legend=dict(orientation="h", yanchor="bottom", y=-0.15),
@@ -192,6 +291,10 @@ if selected_countries:
 else:
     st.info("Pick at least one country to display the radar chart.")
 
+
+# --------------------------------------------------------------------------
+# Supporting table (optional, sorted by chosen metric)
+# --------------------------------------------------------------------------
 with st.expander("Show underlying data table"):
     st.dataframe(
         df[
