@@ -1,5 +1,8 @@
 #AI-assisted code
 #Debugged with Claude
+#Used for text
+#Adapted by authors
+
 
 import numpy as np
 import pandas as pd
@@ -9,10 +12,58 @@ import matplotlib.pyplot as plt
 import streamlit as st
 from scipy import stats
 
-st.set_page_config(page_title="Global Wind Resource Map", layout="wide")
+st.set_page_config(page_title="Wind", layout="wide")
+
+COLOR_OVER = "#1f77b4"
+COLOR_UNDER = "#d62728"
+
+st.title(" Wind Resource & Performance Analysis")
+
+st.markdown(
+    """
+Question: Do countries with **higher average wind speeds** generate **proportionally more electricity**
+per installed turbine capacity than countries with lower wind speeds, and which countries
+over- or underperform relative to their raw wind potential?
+"""
+)
 
 df = pd.read_csv("./data/Q5_Data/wind.csv")
 
+st.subheader("Key metrics")
+
+st.markdown("**Capacity factor**: how efficiently installed capacity is used?")
+st.latex(r"""
+\text{Capacity factor (\%)} = \frac{\text{Actual generation (TWh)}}
+{\text{Installed capacity (GW)} \times 8760\ \text{h}} \times 100
+""")
+st.markdown(
+    "8,760 is the number of hours in a year, so the denominator is the "
+    "theoretical maximum a country's turbines could generate if they ran at "
+    "full capacity every hour of the year. A higher capacity factor means "
+    "the installed turbines are producing closer to their theoretical maximum."
+)
+
+st.markdown("**Performance score**: does a country do better or worse than its wind speed alone predicts?")
+st.markdown(
+    "Performance score = actual capacity factor minus the value expected from mean wind speed alone."
+)
+
+col_formula1, col_formula2 = st.columns(2)
+with col_formula1:
+    st.latex(r"\text{Expected CF} = \text{intercept} + \text{slope} \times \text{wind speed}")
+with col_formula2:
+    st.latex(r"\text{Performance score} = \text{Actual CF} - \text{Expected CF}")
+
+st.markdown(
+    "- 🔵 **Positive score** → overperformer: more electricity per installed capacity than its wind speed would suggest "
+    "(e.g. good turbine siting, newer technology, strong grid integration).\n"
+    "- 🔴 **Negative score** → underperformer: less electricity than expected "
+    "(e.g. older turbine fleet, grid curtailment, regulatory constraints)."
+)
+
+"""
+Example Performance score
+"""
 reg_data = df.dropna(subset=["wind_speed_100m_mean_ms", "capacity_factor_pct"])
 
 slope, intercept, r_value, p_value, std_err = stats.linregress(
@@ -22,6 +73,81 @@ slope, intercept, r_value, p_value, std_err = stats.linregress(
 
 df["expected_capacity_factor"] = intercept + slope * df["wind_speed_100m_mean_ms"]
 df["performance_score"] = df["capacity_factor_pct"] - df["expected_capacity_factor"]
+
+top_over = df.loc[df["performance_score"].idxmax()]
+top_under = df.loc[df["performance_score"].idxmin()]
+
+st.markdown(
+    f"""
+**example:**
+"""
+)
+st.latex(r"\text{Expected CF} = \text{intercept} + \text{slope} \times \text{wind speed}")
+st.markdown(
+    f"""
+The intercept ({intercept:.1f}) and slope ({slope:.2f}) come directly from fitting the
+regression line through all {len(reg_data)} countries. 
+
+**{top_over['country']}** has a mean wind speed of {top_over['wind_speed_100m_mean_ms']:.1f} m/s,
+so its expected capacity factor is {intercept:.1f} + {slope:.2f} × {top_over['wind_speed_100m_mean_ms']:.1f}
+= **{top_over['expected_capacity_factor']:.1f}%**. Its actual capacity factor is
+{top_over['capacity_factor_pct']:.1f}%, so its performance score is
+**{top_over['performance_score']:+.1f} pp**.
+
+**{top_under['country']}**, by contrast, has a mean wind speed of
+{top_under['wind_speed_100m_mean_ms']:.1f} m/s, giving an expected capacity factor of
+{intercept:.1f} + {slope:.2f} × {top_under['wind_speed_100m_mean_ms']:.1f}
+= **{top_under['expected_capacity_factor']:.1f}%**. But its actual capacity factor is only
+{top_under['capacity_factor_pct']:.1f}%. A performance score of
+**{top_under['performance_score']:+.1f} pp**.
+"""
+)
+
+# exeample
+top_over = df.loc[df["country"] == "Italy"].iloc[0]
+top_under = df.loc[df["country"] == "Argentina"].iloc[0]
+
+st.markdown(
+    """
+**example:**
+"""
+)
+
+fig_example, ax_example = plt.subplots(figsize=(5.5, 4))
+
+x_line = np.linspace(reg_data["wind_speed_100m_mean_ms"].min() - 0.5,
+                      reg_data["wind_speed_100m_mean_ms"].max() + 0.5, 100)
+y_line = intercept + slope * x_line
+ax_example.plot(x_line, y_line, color="black", linewidth=1.5, label="Regression line (expected CF)")
+
+ax_example.scatter([top_over["wind_speed_100m_mean_ms"]], [top_over["capacity_factor_pct"]],
+                    color=COLOR_OVER, zorder=3, s=80)
+ax_example.plot([top_over["wind_speed_100m_mean_ms"]] * 2,
+                [top_over["expected_capacity_factor"], top_over["capacity_factor_pct"]],
+                color=COLOR_OVER, linestyle="--", linewidth=1.2)
+ax_example.annotate(f"{top_over['country']}\n({top_over['performance_score']:+.1f} pp)",
+                     (top_over["wind_speed_100m_mean_ms"], top_over["capacity_factor_pct"]),
+                     textcoords="offset points", xytext=(8, 4), fontsize=8, color=COLOR_OVER)
+
+ax_example.scatter([top_under["wind_speed_100m_mean_ms"]], [top_under["capacity_factor_pct"]],
+                    color=COLOR_UNDER, zorder=3, s=80)
+ax_example.plot([top_under["wind_speed_100m_mean_ms"]] * 2,
+                [top_under["expected_capacity_factor"], top_under["capacity_factor_pct"]],
+                color=COLOR_UNDER, linestyle="--", linewidth=1.2)
+ax_example.annotate(f"{top_under['country']}\n({top_under['performance_score']:+.1f} pp)",
+                     (top_under["wind_speed_100m_mean_ms"], top_under["capacity_factor_pct"]),
+                     textcoords="offset points", xytext=(8, -18), fontsize=8, color=COLOR_UNDER)
+
+ax_example.set_xlabel("Mean wind speed (m/s)", fontsize=9)
+ax_example.set_ylabel("Capacity factor (%)", fontsize=9)
+ax_example.set_title("Performance score", fontsize=10, fontweight="bold")
+ax_example.tick_params(labelsize=8)
+ax_example.spines[["top", "right"]].set_visible(False)
+ax_example.grid(alpha=0.3)
+plt.tight_layout()
+
+st.pyplot(fig_example)
+
 
 # Sidebar controls
 st.sidebar.header("Map settings")
@@ -43,13 +169,21 @@ color_scale = "RdBu" if color_col == "performance_score" else "YlGnBu"
 color_midpoint = 0 if color_col == "performance_score" else None
 
 # Main title
-st.title("🌍 Global Wind Resource & Performance Map")
-st.caption(
-    "Capacity factor = actual generation ÷ theoretical max generation at full capacity. "
-    "Performance score = actual capacity factor minus the capacity factor predicted "
-    "from the country's mean wind speed alone (positive = overperforming its wind resource)."
+st.header("Global Wind Resource & Performance Map")
+st.markdown(
+    "We start with a world map because the question is inherently spatial: "
+    "is there a geographic pattern to which countries turn wind into "
+    "electricity efficiently, and which don't? The map below lets you "
+    "switch between two views. **Capacity factor** shows the raw "
+    "efficiency number for every country. Useful for spotting the overall "
+    "leaders and laggards at a glance. **Performance score** instead shows "
+    "the regression residual explained above, which is the more interesting "
+    "view for our actual question: it strips out the part of the "
+    "difference that wind speed alone explains, so what's left on the map "
+    "is specifically the over and underperformance relative to each "
+    "country's own wind potential. Hover over any country to see its exact "
+    "wind speed, power density, installed capacity, and generation."
 )
-
 
 # Map: capacity factor or performance score
 fig = px.choropleth(
@@ -102,15 +236,20 @@ st.plotly_chart(fig, use_container_width=True)
 
 # lollipop chart: over vs. underperformers
 st.header("Ranked Performance Residuals")
-st.caption(
-    "Regression of capacity factor on wind speed; residual = actual − expected. "
-    "Positive bars = overperformers, negative = underperformers. "
-    "By default, the top 3 over- and underperformers are shown - use the "
-    "dropdowns to add or remove countries."
+st.markdown(
+    "The map shows performance scores geographically, but it makes it hard "
+    "to directly compare specific countries against each other or read off "
+    "exact values. This chart isolates the actual answer to the second part "
+    "of our research question, which countries over or underperform, by "
+    "ranking countries on their performance score alone. Bars pointing "
+    "right (blue) are countries generating more electricity from their "
+    "installed capacity than their wind speed would predict, bars pointing "
+    "left (red) are generating less. By default we show the 3 strongest "
+    "over- and underperformers so the chart stays readable, but you can use "
+    "the dropdowns below to swap in any other country and compare it "
+    "directly against these reference cases."
 )
 
-COLOR_OVER = "#1f77b4"
-COLOR_UNDER = "#d62728"
 
 df_perf = df.dropna(subset=["performance_score"])
 
@@ -176,7 +315,21 @@ else:
 
 
 # Interactive radar chart: multi-metric country comparison
-st.header("Multi-Metric Country Comparison (Radar Chart)")
+st.header("Multi-Metric Country Comparison")
+st.markdown(
+    "The map and the ranked chart both focus on a single number, capacity "
+    "factor or performance score, but they can't show *why* a country ends "
+    "up over or underperforming. This radar chart lets you compare several "
+    "countries across all five underlying metrics at once: wind speed, "
+    "power density, installed capacity, generation, and capacity factor. "
+    "This makes it possible to see, for example, whether a country's high "
+    "performance score comes from a genuinely strong wind resource, from a "
+    "comparatively small but well-utilized turbine fleet, or from some "
+    "other combination of factors. Since the five metrics have completely "
+    "different units and scales, each one is normalized to a 0-1 range "
+    "before plotting (explained further below) so they can share one axis "
+    "without one metric visually dominating the others."
+)
 st.caption(
     "Each metric is min-max normalized across all countries (0 = lowest, "
     "1 = highest) so wind speed (m/s), power density (W/m²), installed "
@@ -208,7 +361,6 @@ if selected_countries:
     labels = list(RADAR_METRICS.keys())
     cols = list(RADAR_METRICS.values())
 
-    # Min-max normalize each metric across the full dataset (not just selection)
     norm = df_radar[cols].copy()
     for c in cols:
         lo, hi = df_radar[c].min(), df_radar[c].max()
