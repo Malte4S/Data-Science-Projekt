@@ -104,8 +104,8 @@ st.subheader("Temperature effect on solar modules")  # graph 3 interactive
 
 years = sorted(df.index.year.unique())
 first, last = st.slider("Period", min(years), max(years), (min(years), max(years)))
-t_lo = float(df["temperature_2m_max"].min())
-t_hi = float(df["temperature_2m_max"].max())
+t_lo = float(np.floor(df["temperature_2m_max"].min()))
+t_hi = float(np.ceil(df["temperature_2m_max"].max()))
 tmin, tmax = st.slider("Temperature range (°C)", t_lo, t_hi, (t_lo, t_hi), 0.5)
 
 d = df.copy()
