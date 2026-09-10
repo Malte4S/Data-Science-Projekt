@@ -5,12 +5,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 st.set_page_config(
-    page_title="Research Question 6",
+    page_title="Power Generation Volatility and Power Trade Share Volatility",
     layout="wide"
 )
 st.title("Power Generation Volatility and Power Trade Share Volatility")
 st.write("Question: Has the growing share of weather-dependent renewable energy increased the volatility of national electricity generation during extreme weather events, \
          and to what extent do cross-border electricity imports mitigate this differently across countries?")
+
+st.subheader("Key metrics")
+st.write("__Generation Volatility:__ The Generation Volatility decribes how much the Generation changes within a weather event period. Its Calculated as follows:")
+st.latex(r'''\frac{\text{Standard deviation of the Generation}}{\text{Mean of the Generation}} \cdot 100''')
+st.write("__Change in Generation Volatility:__ Describes how the Generation Volatiltiy of an extreme weather event differs from the Generation Volatility of 'normal' day.")
+st.write("__Trading Volatility:__ The Trading Volatility decribes how much the amount of traded power changes within a weather event period. Its Calculated as follows:")
+st.latex(r'''\frac{\text{Standard deviation of the amount traded}}{\text{Mean of the amount trade}} \cdot 100''')
+st.write("__Change in Trading Volatility:__ Describes how the Trading Volatiltiy of an extreme weather event differs from the Trading Volatility of 'normal' day.")
 
 event_names = {
     "high_heat": "Heatwave"
@@ -213,6 +221,7 @@ for country, group in df_trade_filtered.groupby("country"):
         alpha=0.7,
         s=50
     )
+    
 
 # Null-Linien
 ax3.axhline(

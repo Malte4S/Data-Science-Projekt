@@ -6,7 +6,7 @@ import numpy as np
 from pathlib import Path
 
 st.set_page_config(
-    page_title="Research Question 2",
+    page_title="Bidding Zone Price Volatility",
     layout="wide"
 )
 
@@ -16,6 +16,17 @@ st.write("Question: To what extent do countries with a higher share of renewable
 st.write("For this analysis we chose Finnland and Germany as representatives for the more renewable based countries due to their high share in installed reneable energy and Poland and Czechia as representatives for more fossil based \
         countires (ref.: Research Question 6). We define an extreme weather event here as the top 10 percent outliers when looking over all the data that happen over a prolonged period. For example is a Heatwave event defined by 3 consequtive days \
         that have a mean temperature in the top 10 percent of all days in Germany.")
+
+st.subheader("Key metrics")
+st.write("__Price Volatility:__ The Price Volatility decribes how much the Price changes within a weather event period. Its Calculated as follows:")
+st.latex(r'''\frac{\text{Standard deviation of the Price}}{\text{Mean of the Price}} \cdot 100''')
+st.write("__Change in Price Volatility:__ Describes how the Price Volatiltiy of an Extreme Weather Event differs from the Price Volatility of 'normal' day.")
+st.write("__Renewable Generation Share:__ The Renewable Generation Share shows how much of the Generated Energy during a weather event period was renewable. Its calculated as follows:")
+st.latex(r'''\frac{\text{Mean of the Renewable Power Generation}}{\text{Total Power Generation}} \cdot 100''')
+
+st.subheader("Whats a Bidding Zone?")
+st.write("A Bidding Zone is a Region in which the same wholesale electricity price applies. Participants can trade electricity freely with in a Bidding Zone without considering the actual transmission rates of the power grid. A low Price means, that there is alot of electricity overhead that can be traded\
+         while a high price reflects a lack of electricity to cover the demand. Trade between Bidding Zones will push the prices towards each other but only until the transmission rate between the networks is exhausted an no further electricity can be traded.")
 #-----------------------------------------------------------
 # Visual 1
 #-----------------------------------------------------------
@@ -229,16 +240,27 @@ country_names = {
 df_volatility_country["country_name"] = df_volatility_country["country"].map(country_names)
 
 country = df_volatility_country["country_name"].unique()
+price_year = df_volatility_country["year"].unique()
 
 selected_country = st.selectbox(
     "Country:"
     ,options = country
 )   
 
-df_volatility_country_filtered = df_volatility_country[df_volatility_country["country_name"] == selected_country]
-df_volatility_country_filtered["date"] = pd.to_datetime(df_volatility_country_filtered["date"])
+selected_year3 = st.slider(
+    "Select year range:"
+    ,min_value=2019
+    ,max_value=2024
+    ,value=(2019,2024)
+    ,step=1
+)
 
-import matplotlib.dates as mdates
+df_volatility_country_filtered = df_volatility_country[
+    (df_volatility_country["country_name"] == selected_country)
+    & (df_volatility_country["year"] >= selected_year3[0])
+    & (df_volatility_country["year"] <= selected_year3[1])]
+
+df_volatility_country_filtered["date"] = pd.to_datetime(df_volatility_country_filtered["date"])
 
 fig3, ax3 = plt.subplots(figsize=(10, 6))
 
