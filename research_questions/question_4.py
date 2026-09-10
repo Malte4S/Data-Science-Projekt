@@ -17,13 +17,28 @@ st.set_page_config(
 st.title("Research Question 4")
 st.write("Question: In drought years, do countries with high hydro dependency show a statistically significant increase in fossil fuel backup generation compared to countries with a diversified energy mix?")
 
-df = pd.read_csv("./data/drought_energy_clean.csv")
+st.write(
+    "For this analysis we use 14 countries (AUT, BRA, CAN, CHE, DEU, ESP, FRA "
+    "GBR, ITA, NLD, NOR, PRT, SWE, USA). A country is classified as 'High Hydro "
+    "Dependency' if its mean hydro share of electricity generation across the "
+    "full period is at or above a chosen threshold (40% by default, adjustable "
+    "in the first chart below), and 'Diversified' otherwise. A drought year is "
+    "defined using the SPEI-12 (12-month Standardised Precipitation-Evapotranspiration "
+    "Index). A year counts as a drought year when SPEI-12 falls below -1.0 " 
+    "This threshold follows the standard drought classification used in climate "
+    "research (McKee et al., 1993), where SPEI values between 0 and -0.99 are "
+    "considered near normal, -1.0 to -1.49 moderately dry, -1.5 to -1.99 severely "
+    "dry, and values at or below -2.0 extremely dry. "
+)
 
-st.subheader("Interactive Bubble Chart")
+df = pd.read_csv("./data/Q4_Data/drought_energy_clean.csv")
+
+st.subheader("Bubble Chart")
 st.markdown(
-    "Each country appears as one bubble, positioned by its overall mean "
-    "hydro and fossil shares. Bubble size shows how many drought years that "
-    "country experienced."
+    "First we take a look at how each country's overall energy mix "
+    "relates to how often it experienced drought. Each bubble below is one "
+    "country, positioned by its overall mean hydro and fossil shares, with "
+    "bubble size showing how many drought years that country experienced. "
 )
 
 threshold = st.slider(
@@ -124,6 +139,19 @@ Bar chart for showing drought vs. non-drought years by hydro-dependency group.
 
 st.title("Fossil Backup Generation")
 st.subheader("Drought vs. Non-Drought Years by Hydro-Dependency Group")
+st.markdown(
+    "Next we wanted to isolate the actual effect we are testing: does fossil "
+    "fuel generation increase specifically in drought years, and does that "
+    "increase look different for hydro-dependent countries compared to "
+    "diversified ones? Here we fix the hydro dependency split at the 40% "
+    "threshold and compare the mean fossil fuel share of generation across "
+    "four groups: diversified countries in normal years, diversified "
+    "countries in drought years, high-hydro-dependency countries in normal "
+    "years, and high-hydro-dependency countries in drought years. If our "
+    "hypothesis holds, the increase from normal to drought years should be "
+    "larger for the High Hydro Dependency group than for the Diversified "
+    "group."
+)
 
 df["fossil_pct"] = df["fossil_share"] * 100
 
@@ -275,7 +303,7 @@ Time series per country: hydro vs. fossil share, with drought years highlighted.
 HYDRO_COLOR = "#1F6F8B"
 FOSSIL_COLOR = "#B5562E"
 DROUGHT_BAND_COLOR = "rgba(217, 199, 154, 0.55)"
-DROUGHT_THRESHOLD = -1.0  
+DROUGHT_THRESHOLD = -1.0
 
 def drought_bands(rows):
     """Groups consecutive drought years into bands for shading."""
@@ -299,9 +327,17 @@ def pct(x):
 
 st.title("Where Does the Electricity Come From When Drought Hits?")
 st.subheader("Time Series by Country")
-st.write(
-    f"Hydro and fossil fuel share of electricity generation. Shaded areas "
-    f"mark drought years (SPEI-12 < {DROUGHT_THRESHOLD})."
+st.markdown(
+    "Finally, the aggregated view above hides how drought and fossil "
+    "generation actually unfold year by year within a single country, and it "
+    "cannot show whether a country's response changed over time or was "
+    "driven by one particularly bad drought. Here you can pick any country "
+    "and see its hydro and fossil fuel share plotted year by year from "
+    "2005-2023, with drought years (SPEI-12 < -1.0) shaded in the "
+    "background. This makes it possible to check, for a specific country, "
+    "whether fossil share visibly rises during the shaded drought periods, "
+    "and whether that pattern looks different for hydro-heavy countries "
+    "(marked with a ~) compared to diversified ones."
 )
 
 countries = sorted(df["country"].unique())

@@ -10,10 +10,10 @@ from datetime import date
 
 st.header("Interactive Sandbox")
 st.markdown(
-"The sandbox let's you plot correlations between the selected weather conditions and renewable energy generation.  "
+"This final visualization, which is modeled as a sandbox, synthesizes both the regionally weighted weather data, as well as the daily capacity factor.  "
 "\nEach dot represents a day in the 2023-2025 period, with the x-axis representing the meteorological condition and the y-axis representing the renewable electricity generation. "
-"\nTo interact with the graph, you can select a specific correlation method (Pearson or Spearman), a technology, and a weather variable. You can also filter the data by season to focus on specific periods of the year.  "
-"\nEven though this was the primary way we found relevant correlations, it should be noted that not every possible combination of weather variable and technology will yield a statistically significant correlation. **Hover over the points to see the specific period and exact values.**"
+"\nThis sandbox was our primary driver of finding relevant correlations, though it should be noted that not every possible combination will yield statistically significant results.  "
+"\n**You can select a specific correlation method (Pearson or Spearman), a technology, and a weather variable. You can also filter the data by season to focus on specific periods of the year. Hover over the dots to view the specific period and exact values.**"
 )
 
 method = st.segmented_control("Select the Correlation Method", ["Pearson", "Spearman"], selection_mode="single", default="Pearson", required=True)
