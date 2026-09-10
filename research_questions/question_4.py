@@ -10,11 +10,11 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 
 st.set_page_config(
-    page_title="Research Question 4",
+    page_title="Drought and Hydro Energy Production",
     layout="wide"
 )
 
-st.title("Research Question 4")
+st.title("Drought and Hydro Energy Production")
 st.write("Question: In drought years, do countries with high hydro dependency show a statistically significant increase in fossil fuel backup generation compared to countries with a diversified energy mix?")
 
 st.write(
@@ -113,8 +113,16 @@ fig.add_vline(
     x=threshold,
     line_dash="dash",
     line_color="gray",
-    annotation_text=f"{threshold}% threshold",
-    annotation_position="top",
+)
+fig.add_annotation(
+    x=threshold,
+    y=1.02,
+    xref="x",
+    yref="paper",
+    text=f"{threshold}% threshold",
+    showarrow=False,
+    font=dict(color="gray", size=12),
+    xanchor="center",
 )
 
 fig.update_xaxes(showgrid=True, gridcolor="rgba(0,0,0,0.1)", showline=True, linewidth=2, linecolor="black", mirror=True)
@@ -124,6 +132,7 @@ fig.update_layout(
     legend_title_text="",
     height=600,
     template="plotly_white",
+    margin=dict(t=70),
 )
 
 st.plotly_chart(fig, use_container_width=True, key="bubble_chart")
@@ -133,10 +142,8 @@ st.caption(
     "experienced. Norway had no drought years, so its bubble size is halved to make it visible."
 )
 
-'''
-Bar chart for showing drought vs. non-drought years by hydro-dependency group.
-'''
 
+# bar chart: drought vs. non-drought years, by hydro dependency group
 st.title("Fossil Backup Generation")
 st.subheader("Drought vs. Non-Drought Years by Hydro-Dependency Group")
 st.markdown(
@@ -296,17 +303,14 @@ st.pyplot(
     use_container_width=True
 )
 
-'''
-Time series per country: hydro vs. fossil share, with drought years highlighted.
-'''
 
+# time series chart: year-by-year fossil and hydro share, with drought shading
 HYDRO_COLOR = "#1F6F8B"
 FOSSIL_COLOR = "#B5562E"
 DROUGHT_BAND_COLOR = "rgba(217, 199, 154, 0.55)"
 DROUGHT_THRESHOLD = -1.0
 
 def drought_bands(rows):
-    """Groups consecutive drought years into bands for shading."""
     bands = []
     start = None
     prev_year = None
