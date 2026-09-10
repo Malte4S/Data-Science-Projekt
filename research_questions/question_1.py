@@ -100,32 +100,53 @@ plt.savefig(
 )
 
 
-st.subheader("Temperature effect on solar modules") #graph 3 interactive
+st.subheader("Temperature effect on solar modules")  # graph 3 interactive
 
 years = sorted(df.index.year.unique())
-first, last = st.slider("Period", min(years), max(years),(min(years), max(years)))
+first, last = st.slider("Period", min(years), max(years), (min(years), max(years)))
+t_lo = float(df["temperature_2m_max"].min())
+t_hi = float(df["temperature_2m_max"].max())
+tmin, tmax = st.slider("Temperature range (°C)", t_lo, t_hi, (t_lo, t_hi), 0.5)
+
 d = df.copy()
 d["yield"] = d[SOL] / d["shortwave_radiation_sum"]
 d["yield"] /= d.groupby(d.index.year)["yield"].transform("mean")
 _, hw = heatwaves(df, 0.85)
-keep = (d.index.year >= first) & (d.index.year <= last)
+keep = ((d.index.year >= first) & (d.index.year <= last)
+        & (d["temperature_2m_max"] >= tmin) & (d["temperature_2m_max"] <= tmax))
 d, m_hw = d[keep], hw.to_numpy()[keep]
 
-x, y = d["temperature_2m_max"], d["yield"]
-slope, intercept = np.polyfit(x, y, 1)
-st.caption(f"{first}–{last} · {len(d)} days · {int(m_hw.sum())} of them heatwave days")
-fig, ax = plt.subplots(figsize=(8, 4))
+if len(d) < 10:
+    st.warning("Not enough days in this selection to fit a trend line.")
+    st.stop()
 
-ax.scatter(x[~m_hw], y[~m_hw], s=8, color="lightsteelblue", edgecolor="none",label="normal days")
-ax.scatter(x[m_hw], y[m_hw], s=16, color="orangered", edgecolor="none",label="heatwave days")
-ax.plot([x.min(), x.max()],[slope * x.min() + intercept, slope * x.max() + intercept],color="black", lw=1.5)
+x, y = d["temperature_2m_max"].to_numpy(), d["yield"].to_numpy()
+n = len(x)
+slope, intercept = np.polyfit(x, y, 1)
+resid = y - (slope * x + intercept)
+se = np.sqrt((resid @ resid) / (n - 2) / ((x - x.mean()) ** 2).sum())
+ci = 1.96 * se
+r = np.corrcoef(x, y)[0, 1]
+
+st.caption(f"{first}–{last} · {tmin:.1f}–{tmax:.1f} °C · {n} days · "
+           f"{int(m_hw.sum())} of them heatwave days")
+
+fig, ax = plt.subplots(figsize=(8, 4))
+ax.scatter(x[~m_hw], y[~m_hw], s=8, color="lightsteelblue", edgecolor="none",
+           label="normal days")
+ax.scatter(x[m_hw], y[m_hw], s=16, color="orangered", edgecolor="none",
+           label="heatwave days")
+ax.plot([x.min(), x.max()],
+        [slope * x.min() + intercept, slope * x.max() + intercept],
+        color="black", lw=1.5)
+ax.set_title(f"Slope {slope*100:+.2f} % per K   "
+             f"(95 % CI {(slope-ci)*100:+.2f} to {(slope+ci)*100:+.2f})\n"
+             f"R² = {r**2:.3f} · n = {n} days", fontsize=9)
 ax.set_xlabel("Tmax (°C)")
 ax.set_ylabel("Yield per solar radiation")
 ax.legend(fontsize=8, loc="upper right")
-
 ax.set_axisbelow(True)
 ax.grid(True, axis="both", linestyle="--", linewidth=0.6, alpha=0.7)
-
 fig.tight_layout()
 st.pyplot(fig)
-st.caption("Solar output divided by radiation, normalised per year. ")
+st.caption("Solar output divided by radiation, normalised per year.)")
