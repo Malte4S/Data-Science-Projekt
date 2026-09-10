@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 st.title("Drought and Hydro Energy Production")
-st.write("Question: In drought years, do countries with high hydro dependency show a statistically significant increase in fossil fuel backup generation compared to countries with a diversified energy mix?")
+st.write("Question: In drought years, do countries with high hydro dependency show an increase in fossil fuel backup generation compared to countries with a diversified energy mix?")
 
 st.write(
     "For this analysis we use 14 countries (AUT, BRA, CAN, CHE, DEU, ESP, FRA "
