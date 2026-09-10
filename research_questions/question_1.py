@@ -132,16 +132,11 @@ st.caption(f"{first}–{last} · {tmin:.1f}–{tmax:.1f} °C · {n} days · "
            f"{int(m_hw.sum())} of them heatwave days")
 
 fig, ax = plt.subplots(figsize=(8, 4))
-ax.scatter(x[~m_hw], y[~m_hw], s=8, color="lightsteelblue", edgecolor="none",
-           label="normal days")
-ax.scatter(x[m_hw], y[m_hw], s=16, color="orangered", edgecolor="none",
-           label="heatwave days")
+ax.scatter(x[~m_hw], y[~m_hw], s=8, color="lightsteelblue", edgecolor="none",label="normal days")
+ax.scatter(x[m_hw], y[m_hw], s=16, color="orangered", edgecolor="none", label="heatwave days")
 ax.plot([x.min(), x.max()],
-        [slope * x.min() + intercept, slope * x.max() + intercept],
-        color="black", lw=1.5)
-ax.set_title(f"Slope {slope*100:+.2f} % per K   "
-             f"(95 % CI {(slope-ci)*100:+.2f} to {(slope+ci)*100:+.2f})\n"
-             f"R² = {r**2:.3f} · n = {n} days", fontsize=9)
+        [slope * x.min() + intercept, slope * x.max() + intercept],color="black", lw=1.5)
+ax.set_title(f"Slope {slope*100:+.2f} % per °C   " f"(95 % CI {(slope-ci)*100:+.2f} to {(slope+ci)*100:+.2f})\n")
 ax.set_xlabel("Tmax (°C)")
 ax.set_ylabel("Yield per solar radiation")
 ax.legend(fontsize=8, loc="upper right")
