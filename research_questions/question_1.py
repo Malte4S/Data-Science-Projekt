@@ -28,11 +28,8 @@ def heatwaves(df, percentile): #days above a heat percentile in july/august (at 
 
 df = load()
 
-st.title("Research Question 1")
+st.title("Heatwave effect on solar and hydro generation in Spain between 2015and 2024.")
 st.markdown("""
-**How does a heatwave affect solar and hydro generation in Spain between 2015
-and 2024?**
-
 Solar panels are less efficient under extreme heat. Hydro power splits in two:
 Run of River is dependant on the natural water level, while reservoirs are released on demand. 
 This demand increases during heatwaves with higher AC usage.
