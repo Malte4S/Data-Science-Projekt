@@ -38,7 +38,7 @@ st.subheader("Regional Weighted Weather Data")
 st.markdown(
 "\nWe located each renewable power plant, aggregated them into clusters and fetched the weather data. We then aggregated the clusters alongisde their weather into regions, and weighted the values according to the total capacity they carry for each energy type:"
 )
-st.latex(r'''\text{Regional Weather}_{Tech, Year} = \frac{\sum_{i=1}^{n} \left( \text{Cluster Weather}_{i} \times \text{Cluster Capacity}_{Tech, i} \right)}{\text{Total Regional Capacity}_{Tech, Year}}''')
+st.latex(r'''\text{Daily Regional Capacity Factor}_{Tech} = \frac{\sum_{c=1}^{k} \text{Daily Generation}_{Tech, c} \text{ (MWh)}}{\left( \sum_{c=1}^{k} \text{Yearly Capacity}_{Tech, c} \text{ (MW)} \right) \times 24 \text{ hours}}''')
 st.markdown(
 "The result represents the regional average weather, weighted by the spatial distribution of generation capacity across the entire time frame.  "
 "\n**In this graph, you can select a specific weather variable to visualize its trend over time, and adjust the date range to focus on specific periods**"
@@ -107,12 +107,12 @@ with middle:
 
 #============================
 
-st.subheader("Daily Capacity Factor")
+st.subheader("Daily Regional Capacity Factor")
 st.markdown(
 "To account for possibly significant differences in energy output between both regions, a daily capacity factor is calculated. Here it represents the regional average of the actual energy output in relation to the theoretical maximum of any given day for each technology: " 
 )
 st.latex(r'''
-\text{Daily CF}_{Tech} = \frac{\text{Actual Regional Generation}_{Tech} \text{ (MWh)}}{\text{Total Regional Capacity}_{Tech} \text{ (MW)} \times 24 \text{ hours}}
+\text{Daily Regional Capacity Factor}_{Tech} = \frac{\text{Actual Regional Generation}_{Tech} \text{ (MWh)}}{\text{Total Regional Capacity}_{Tech} \text{ (MW)} \times 24 \text{ hours}}
 ''')
 st.markdown(
 "**You can select the specific technology, and then choose to view the data at the regional or country level. Alongside the graph, the capacity data is displayed in a table below.**"
