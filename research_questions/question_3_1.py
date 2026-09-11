@@ -16,9 +16,11 @@ st.markdown(
 "\n**You can select a specific correlation method (Pearson or Spearman), a technology, and a weather variable. You can also filter the data by season to focus on specific periods of the year. Hover over the dots to view the specific period and exact values.**"
 )
 
+
 method = st.segmented_control("Select the Correlation Method", ["Pearson", "Spearman"], selection_mode="single", default="Pearson", required=True)
 tech = st.segmented_control("Select the Technology", ['Solar', 'Wind', 'Hydro', 'Bioenergy'], selection_mode="single", default='Solar', required=True, key="interactive_data")
 weather = st.segmented_control("Select the Weather Variable", ['Shortwave_Radiation_Sum', 'Wind_Speed_100m', 'Wind_Gusts_10m_Max', 'Temperature_2m_Max', 'Apparent_Temperature_Min', 'Precipitation_Sum', 'Snow_Depth'], selection_mode="single", default='Shortwave_Radiation_Sum', required=True)
+tech1 = st.segmented_control("Select the Locations", ['Solar', 'Wind', 'Hydro', 'Bioenergy'], selection_mode="single", default='Solar', required=True, key="interactive_data")
 seasons = st.segmented_control("Filter by Season", ['Spring', 'Summer', 'Autumn', 'Winter'], selection_mode="multi", default=[])
 
 GEN_FILE = "./data/Q3_Data/European_Daily_Generation_2023_2025.csv"
@@ -41,7 +43,9 @@ def calculate_spearman_ci(rho, n):
 # 1. Targeted File Loading
 gen_cols = ['Region', 'Country', 'Date', tech]
 cap_cols = ['Region', 'Country', 'Year', tech]
-weather_cols = ['Region', 'Date', weather]
+# The weather column is now dynamically built based on the selected technology
+dynamic_weather_col = f"{tech1}_{weather}"
+weather_cols = ['Region', 'Date', dynamic_weather_col]
 
 gen_df = pd.read_csv(GEN_FILE, usecols=gen_cols).rename(columns={tech: 'Daily_MWh'})
 cap_df = pd.read_csv(CAP_FILE, usecols=cap_cols).rename(columns={tech: 'Capacity_MW'})
@@ -62,7 +66,9 @@ weather_df['Period'] = weather_df['Date'].str[:slice_len]
 final_gen = merged.groupby(['Region', 'Period']).agg({'Daily_MWh': 'sum', 'Daily_Potential_MWh': 'sum'}).reset_index()
 final_gen['CF'] = final_gen['Daily_MWh'] / final_gen['Daily_Potential_MWh']
 
-final_weather = weather_df.groupby(['Region', 'Period'])[[weather]].mean().reset_index()
+final_weather = weather_df.groupby(['Region', 'Period'])[[dynamic_weather_col]].mean().reset_index()
+# Rename it back to the generic variable name so the plotting loop works flawlessly
+final_weather = final_weather.rename(columns={dynamic_weather_col: weather})
 final_df = pd.merge(final_gen, final_weather, on=['Region', 'Period'])
 
 # --- INSERT SEASONAL LOGIC HERE ---
