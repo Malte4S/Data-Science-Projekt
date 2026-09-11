@@ -13,8 +13,8 @@ st.markdown(
 "This final visualization, which is modeled as a sandbox, synthesizes both the regionally weighted weather data, as well as the daily capacity factor.  "
 "\nEach dot represents a day in the 2023-2025 period, with the x-axis representing the meteorological condition and the y-axis representing the renewable electricity generation. "
 "\nThis sandbox was our primary driver of finding relevant correlations, though it should be noted that not every possible combination will yield statistically significant results.  "
-"\nYou can select a specific correlation method (Pearson or Spearman), a technology, and a weather variable, as well as choosing a location; Choosing *Solar Farms* for instance will yield weather data representative for Solar Farms, which might prove useful in both intra- and intertype comparisons.  " 
-"\nYou can also filter the data by season to focus on specific periods of the year. Hover over the dots to view the specific period and exact values.**"
+"\n**You can select a specific correlation method (Pearson or Spearman), a technology, and a weather variable, as well as choosing a location; Choosing *Solar Farms* for instance will yield weather data representative for Solar Farms, which might prove useful in both intra- and intertype comparisons.**  " 
+"\n**You can also filter the data by season to focus on specific periods of the year. Hover over the dots to view the specific period and exact values.**"
 )
 
 display_labels = {
