@@ -17,6 +17,13 @@ st.markdown(
 "\nYou can also filter the data by season to focus on specific periods of the year. Hover over the dots to view the specific period and exact values.**"
 )
 
+display_labels = {
+    'Solar': 'Solar Farms',
+    'Wind': 'Wind Turbines',
+    'Hydro': 'Hydroelectric Plants',
+    'Bioenergy': 'Biomass Facilities'
+}
+
 method = st.segmented_control("Select the Correlation Method", ["Pearson", "Spearman"], selection_mode="single", default="Pearson", required=True)
 tech = st.segmented_control("Select the Technology", ['Solar', 'Wind', 'Hydro', 'Bioenergy'], selection_mode="single", default='Solar', required=True, key="interactive_data")
 weather = st.segmented_control("Select the Weather Variable", ['Shortwave_Radiation_Sum', 'Wind_Speed_100M', 'Wind_Gusts_10M_Max', 'Temperature_2M_Max', 'Apparent_Temperature_Min', 'Precipitation_Sum', 'Snow_Depth'], selection_mode="single", default='Shortwave_Radiation_Sum', required=True)
