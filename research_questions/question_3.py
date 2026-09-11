@@ -15,29 +15,32 @@ st.set_page_config(
 
 st.title("Effect of Weather Conditions on Renewable Energy Generation in Northern and Southern Europe")
 st.write(
-"This research question concerns itself with how renewable electricity generation is associated with regional meteorological conditions between Northern and Southern European countries.  "
-"\nIn this section, we go over the methodology, take a look at some of the data used for the final visualization, and then take a look at the sandbox used to find the relevant correlations, before exploring those."
+"**Question:** How is renewable electricity generation associated with regional meteorological conditions between Northern and Southern European countries?"
+"\nOur goal is to first explore our methodology used for answering this question, before then moving onto the finalized visualization. For that, we'll briefly go over our source, before moving onto our data; what data we used and how we processed."
 )
 
-st.subheader("Methodology")
-st.markdown(
-"First we identified the relevant energy types, time frame, and countries we would consider for this analysis. In the end, we narrowed it down to four energy types, 18 countries from both regions (a list of which is available in the coming visualizations), and a time frame of 2023 to 2025. The following sources were utilized:  "
-"\nOpen-Meteo API: This provided the relevant weather data for select variables, such as shortwave radition, or wind speed. For this specific question, the data was fetched from selected coordinate clusters to minimize API calls.  "
-"\nEnergy Charts API: This provided energy generation as well as yearly capacity data for the selected countries, which was used to calculate the capacity factor.  "
-"\nGlobal Energy Monitor: Lastly, this source provided the relevant locations and coordinates used to cluster and weight the relevant weather data per energy type."    
-)
+st.subheader("Sources")
+st.write("**Global Energy Monitor**  provided datasets of the locations and coordinates for the relevant types of energy that we used to cluster and weight weather data.")
+st.write("**Open-Meteo API** provided the needed weather data, alongside a selection of meteorological variables.")
+st.write("**Energy-Charts API** lastly provided both the energy generation per type, per country.")
 
-st.header("A Look at the Data")
+
+st.header("Let's take a Look at the Data")
 st.markdown(
-"Here we provide a visual overview of the aforementioned data required to answer the research question. It comprises of two main components: the weather data and the renewable energy generation data."
+"The scope of our research covered 18 countries across two regions, northern and southern Europe, over time period of 2023 to 2025.  "
+"\nTo process this enormous amount of data, we had to flatten and aggregate it into two central datasets, which serve as the backbone of the main visualization of this research.  "
+"\nSo in preparation for this, we will go over said data and explain its meaning and our method of calculating it."
 )
 
 #============================
 
 st.subheader("Regional Weighted Weather Data")
 st.markdown(
-"The first dataset is the weather data, which was fetched from 18 different countries across hundreds of unique coordinate clusters. These were then weighted acoording to that year's total capacity and aggregated into their regions.  "
-"\nThe result represents the regional average weather, weighted by the spatial distribution of generation capacity across the entire time frame.  "
+"\nWe located each renewable power plant, aggregated them into clusters and fetched the weather data. We then aggregated the clusters alongisde their weather into regions, and weighted the values according to the total capacity they carry for each energy type:"
+)
+st.latex(r'''\text{Regional Weather}_{Tech, Year} = \frac{\sum_{i=1}^{n} \left( \text{Cluster Weather}_{i} \times \text{Cluster Capacity}_{Tech, i} \right)}{\text{Total Regional Capacity}_{Tech, Year}}''')
+st.markdown(
+"The result represents the regional average weather, weighted by the spatial distribution of generation capacity across the entire time frame.  "
 "\n**In this graph, you can select a specific weather variable to visualize its trend over time, and adjust the date range to focus on specific periods**"
 )
 
@@ -106,8 +109,13 @@ with middle:
 
 st.subheader("Daily Capacity Factor")
 st.markdown(
-"To account for possibly significant difference in energy output between both regions, a capacity factor is calculated. For each technology, this is done by dividing the daily energy generation of each country by its theoretical capacity, then aggregating them into regions.  " 
-"\n**You can select the specific technology, and then choose to view the data at the regional or country level. Alongside the graph, the capacity data is displayed in a table below.**"
+"To account for possibly significant differences in energy output between both regions, a daily capacity factor is calculated. Here it represents the regional average of the actual energy output in relation to the theoretical maximum of any given day for each technology: " 
+)
+st.latex(r'''
+\text{Daily CF}_{Tech} = \frac{\text{Actual Regional Generation}_{Tech} \text{ (MWh)}}{\text{Total Regional Capacity}_{Tech} \text{ (MW)} \times 24 \text{ hours}}
+''')
+st.markdown(
+"**You can select the specific technology, and then choose to view the data at the regional or country level. Alongside the graph, the capacity data is displayed in a table below.**"
 )
 
 active_tech = st.segmented_control("Select the Technology", ['Solar', 'Wind', 'Hydro', 'Bioenergy'], selection_mode="single", default='Solar', required=True, key="generation_data")
