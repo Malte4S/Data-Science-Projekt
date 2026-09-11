@@ -13,14 +13,14 @@ st.markdown(
 "This final visualization, which is modeled as a sandbox, synthesizes both the regionally weighted weather data, as well as the daily capacity factor.  "
 "\nEach dot represents a day in the 2023-2025 period, with the x-axis representing the meteorological condition and the y-axis representing the renewable electricity generation. "
 "\nThis sandbox was our primary driver of finding relevant correlations, though it should be noted that not every possible combination will yield statistically significant results.  "
-"\n**You can select a specific correlation method (Pearson or Spearman), a technology, and a weather variable. You can also filter the data by season to focus on specific periods of the year. Hover over the dots to view the specific period and exact values.**"
+"\nYou can select a specific correlation method (Pearson or Spearman), a technology, and a weather variable, as well as choosing a location; Choosing "Solar Farms" for instance will yield weather data representative for Solar Farms, which might prove useful in both intra- and intertype comparisons.  " 
+"\nYou can also filter the data by season to focus on specific periods of the year. Hover over the dots to view the specific period and exact values.**"
 )
-
 
 method = st.segmented_control("Select the Correlation Method", ["Pearson", "Spearman"], selection_mode="single", default="Pearson", required=True)
 tech = st.segmented_control("Select the Technology", ['Solar', 'Wind', 'Hydro', 'Bioenergy'], selection_mode="single", default='Solar', required=True, key="interactive_data")
-weather = st.segmented_control("Select the Weather Variable", ['Shortwave_Radiation_Sum', 'Wind_Speed_100m', 'Wind_Gusts_10m_Max', 'Temperature_2m_Max', 'Apparent_Temperature_Min', 'Precipitation_Sum', 'Snow_Depth'], selection_mode="single", default='Shortwave_Radiation_Sum', required=True)
-tech1 = st.segmented_control("Select the Locations", ['Solar', 'Wind', 'Hydro', 'Bioenergy'], selection_mode="single", default='Solar', required=True, key="interactive_data")
+weather = st.segmented_control("Select the Weather Variable", ['Shortwave_Radiation_Sum', 'Wind_Speed_100M', 'Wind_Gusts_10M_Max', 'Temperature_2M_Max', 'Apparent_Temperature_Min', 'Precipitation_Sum', 'Snow_Depth'], selection_mode="single", default='Shortwave_Radiation_Sum', required=True)
+location = st.segmented_control("Select the Location", ['Solar', 'Wind', 'Hydro', 'Bioenergy'],format_func=lambda option: display_labels[option] , selection_mode="single", default=None, required=True)
 seasons = st.segmented_control("Filter by Season", ['Spring', 'Summer', 'Autumn', 'Winter'], selection_mode="multi", default=[])
 
 GEN_FILE = "./data/Q3_Data/European_Daily_Generation_2023_2025.csv"
@@ -44,7 +44,7 @@ def calculate_spearman_ci(rho, n):
 gen_cols = ['Region', 'Country', 'Date', tech]
 cap_cols = ['Region', 'Country', 'Year', tech]
 # The weather column is now dynamically built based on the selected technology
-dynamic_weather_col = f"{tech1}_{weather}"
+dynamic_weather_col = f"{tech if location is None else location}_{weather}"
 weather_cols = ['Region', 'Date', dynamic_weather_col]
 
 gen_df = pd.read_csv(GEN_FILE, usecols=gen_cols).rename(columns={tech: 'Daily_MWh'})
