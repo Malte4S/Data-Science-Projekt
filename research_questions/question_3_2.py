@@ -44,12 +44,12 @@ elif st.session_state.preset == "Bioenergy":
     )
 
 preset_dict = {
-    "Spring": ("Spearman", "Solar", "Snow_Depth", ["Spring"]),
-    "Wind": ("Pearson", "Wind", "Wind_Speed_100m",["Spring", "Summer", "Autumn", "Winter"]),
-    "Wind Speed": ("Spearman", "Hydro", "Wind_Speed_100m",["Winter"]),
-    "Bioenergy": ("Spearman", "Bioenergy", "Apparent_Temperature_Min", ["Spring", "Summer", "Autumn", "Winter"]),
-    "Rest of the Year": ("Spearman", "Solar", "Snow_Depth", ["Summer", "Autumn", "Winter"]),
-    "Precipitation": ("Spearman", "Hydro", "Precipitation_Sum",["Winter"])
+    "Spring": ("Spearman", "Solar", "Snow_Depth", ["Spring"], "Solar"),
+    "Wind": ("Pearson", "Wind", "Wind_Speed_100M",["Spring", "Summer", "Autumn", "Winter"], "Wind"),
+    "Wind Speed": ("Spearman", "Hydro", "Wind_Speed_100M",["Winter"], "Wind"),
+    "Bioenergy": ("Spearman", "Bioenergy", "Apparent_Temperature_Min", ["Spring", "Summer", "Autumn", "Winter"], "Bioenergy"),
+    "Rest of the Year": ("Spearman", "Solar", "Snow_Depth", ["Summer", "Autumn", "Winter"], "Solar"),
+    "Precipitation": ("Spearman", "Hydro", "Precipitation_Sum",["Winter"], "Hydro")
 }
 
 presets = st.segmented_control("Select a Preset", ["Solar", "Wind", "Hydro", "Bioenergy"], selection_mode="single", default=None, key="preset")
@@ -58,12 +58,12 @@ presets = st.segmented_control("Select a Preset", ["Solar", "Wind", "Hydro", "Bi
 if presets is not None:
     if presets == "Solar":
         options = st.segmented_control("Select a Preset", ["Spring","Rest of the Year"], selection_mode="single", required=True, default= "Spring")
-        method, tech, weather, seasons = preset_dict[options]
+        method, tech, weather, seasons, location = preset_dict[options]
     elif presets == "Hydro":
         options = st.segmented_control("Select a Preset", ["Wind Speed","Precipitation"], selection_mode="single", required=True, default= "Wind Speed")
-        method, tech, weather, seasons = preset_dict[options]
+        method, tech, weather, seasons, location= preset_dict[options]
     else:
-        method, tech, weather, seasons = preset_dict[presets]
+        method, tech, weather, seasons, location = preset_dict[presets]
 
     GEN_FILE = "./data/Q3_Data/European_Daily_Generation_2023_2025.csv"
     CAP_FILE = "./data/Q3_Data/European_Validated_Capacity_2023_2025.csv"
@@ -85,7 +85,9 @@ if presets is not None:
     # 1. Targeted File Loading
     gen_cols = ['Region', 'Country', 'Date', tech]
     cap_cols = ['Region', 'Country', 'Year', tech]
-    weather_cols = ['Region', 'Date', weather]
+    # The weather column is now dynamically built based on the selected technology
+    dynamic_weather_col = f"{tech if location is None else location}_{weather}"
+    weather_cols = ['Region', 'Date', dynamic_weather_col]
 
     gen_df = pd.read_csv(GEN_FILE, usecols=gen_cols).rename(columns={tech: 'Daily_MWh'})
     cap_df = pd.read_csv(CAP_FILE, usecols=cap_cols).rename(columns={tech: 'Capacity_MW'})
@@ -106,7 +108,9 @@ if presets is not None:
     final_gen = merged.groupby(['Region', 'Period']).agg({'Daily_MWh': 'sum', 'Daily_Potential_MWh': 'sum'}).reset_index()
     final_gen['CF'] = final_gen['Daily_MWh'] / final_gen['Daily_Potential_MWh']
 
-    final_weather = weather_df.groupby(['Region', 'Period'])[[weather]].mean().reset_index()
+    final_weather = weather_df.groupby(['Region', 'Period'])[[dynamic_weather_col]].mean().reset_index()
+    # Rename it back to the generic variable name so the plotting loop works flawlessly
+    final_weather = final_weather.rename(columns={dynamic_weather_col: weather})
     final_df = pd.merge(final_gen, final_weather, on=['Region', 'Period'])
 
     # --- INSERT SEASONAL LOGIC HERE ---
@@ -218,11 +222,10 @@ if presets is not None:
                         ))
 
     # Graph Formatting
-    seasons_str = str(seasons).replace("'", "").replace("[", "").replace("]", "")
     fig.update_layout(
         height=st.session_state.zoom,
         title=dict(
-            text=f"<b>{method} Correlation: Daily Capacity Factor vs. {clean_var_name} ({tech}) ({seasons_str})</b>",
+            text=f"<b>{method} Correlation: Daily Capacity Factor vs. {clean_var_name} ({tech})</b>",
             font=dict(size=20)
         ),
         xaxis_title=dict(text=f"Average {clean_var_name}", font=dict(size=14)),
@@ -240,7 +243,7 @@ if presets is not None:
             borderwidth=1,
             font=dict(size=12)
         ),
-        margin=dict(l=40, r=40, t=60, b=0)
+        margin=dict(l=40, r=40, t=60, b=40)
     )
 
     fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
