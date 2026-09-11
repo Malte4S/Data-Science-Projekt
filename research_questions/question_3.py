@@ -111,9 +111,7 @@ st.subheader("Daily Regional Capacity Factor")
 st.markdown(
 "To account for possibly significant differences in energy output between both regions, a daily capacity factor is calculated. Here it represents the regional average of the actual energy output in relation to the theoretical maximum of any given day for each technology: " 
 )
-st.latex(r'''
-\text{Daily Regional Capacity Factor}_{Tech} = \frac{\text{Actual Regional Generation}_{Tech} \text{ (MWh)}}{\text{Total Regional Capacity}_{Tech} \text{ (MW)} \times 24 \text{ hours}}
-''')
+st.latex(r'''\text{Daily Regiona Capacity Factor}_{Tech} = \frac{\sum_{c=1}^{k} \text{Daily Generation}_{Tech, c} \text{ (MWh)}}{\left( \sum_{c=1}^{k} \text{Yearly Capacity}_{Tech, c} \text{ (MW)} \right) \times 24 \text{ hours}}''')
 st.markdown(
 "**You can select the specific technology, and then choose to view the data at the regional or country level. Alongside the graph, the capacity data is displayed in a table below.**"
 )
