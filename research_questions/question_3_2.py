@@ -18,7 +18,7 @@ if st.session_state.preset is None:
     "\n**Select one of the four presets below to view our chosen correlation for each technology.**"
     )
 elif st.session_state.preset == "Solar":
-    st.header("Negative Correlation between Snow Depth and Solar Energy Output")
+    st.header("Energy Tax of Warmer Temperatures on Solar Panel Efficiency")
     st.markdown(
     "Both regions exhibit an almost equally strong positive correlation with maximum temperature, likely due to it's direct correlation with solar activity, and the amount of shortwave radiation hitting the solar panels.  "
     "\nThe more interesting aspect reveals itself when you look at the LOWESS line; instead of a linear relationship, this showcases the asymptotic relationship of solar panels and temperature: The ideal temperature for solar panels is 25C, above that they lose a fraction of their efficiency for each single degree Celsius increase, which is clearly visible with the south. "
