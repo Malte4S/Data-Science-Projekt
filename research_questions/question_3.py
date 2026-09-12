@@ -41,10 +41,18 @@ st.markdown(
 st.latex(r'''\text{Daily Regional Capacity Factor}_{Tech} = \frac{\sum_{c=1}^{k} \text{Daily Generation}_{Tech, c} \text{ (MWh)}}{\left( \sum_{c=1}^{k} \text{Yearly Capacity}_{Tech, c} \text{ (MW)} \right) \times 24 \text{ hours}}''')
 st.markdown(
 "The result represents the regional average weather, weighted by the spatial distribution of generation capacity across the entire time frame.  "
-"\n**In this graph, you can select a specific weather variable to visualize its trend over time, and adjust the date range to focus on specific periods**"
+"\n**In this graph, you can select a specific weather variable, the technology weighting, to visualize its trend over time, and adjust the date range to focus on specific periods**"
 )
 
-target_weather_var = st.selectbox("Select a Weather Variable", ['Shortwave_Radiation_Sum', 'Wind_Speed_100m', 'Wind_Gusts_10m_Max', 'Temperature_2m_Max', 'Apparent_Temperature_Min', 'Precipitation_Sum', 'Snow_Depth'], index=0)
+# --- FIX: Add Technology weighting selector and update lowercase 'm's to capital 'M's ---
+col1, col2 = st.columns(2)
+with col1:
+    target_tech_weight = st.selectbox("Select Technology Weighting", ['Solar', 'Wind', 'Hydro', 'Bioenergy'], index=2)
+with col2:
+    target_weather_var = st.selectbox("Select a Weather Variable", ['Shortwave_Radiation_Sum', 'Wind_Speed_100M', 'Wind_Gusts_10M_Max', 'Temperature_2M_Max', 'Apparent_Temperature_Min', 'Precipitation_Sum', 'Snow_Depth'], index=0)
+
+# Dynamically construct the specific matrix column to pull from the CSV
+dynamic_col_name = f"{target_tech_weight}_{target_weather_var}"
 
 if "weather_date_range" not in st.session_state:
     st.session_state.weather_date_range = (date(2023, 1, 1), date(2025, 12, 31))
@@ -67,11 +75,11 @@ colors = {'Northern Europe': '#1f77b4', 'Southern Europe': '#ff7f0e'}
 for region in weather_timeseries['Region'].unique():
     region_data = weather_timeseries[weather_timeseries['Region'] == region]
     
-    # Verify the variable exists to prevent fatal application crashes
-    if target_weather_var in region_data.columns:
+    # Verify the dynamic variable exists to prevent fatal application crashes
+    if dynamic_col_name in region_data.columns:
         fig_weather.add_trace(go.Scattergl(
             x=region_data['Date'],
-            y=region_data[target_weather_var],
+            y=region_data[dynamic_col_name],
             mode='lines',
             name=region,
             line=dict(color=colors.get(region, 'gray')),
@@ -81,7 +89,7 @@ for region in weather_timeseries['Region'].unique():
         
 # 4. Graph Formatting
 fig_weather.update_layout(
-    title=dict(text=f"<b>Regional Trends: {clean_var_name}</b>", font=dict(size=20)),
+    title=dict(text=f"<b>Regional Trends: {target_tech_weight}-Weighted {clean_var_name}</b>", font=dict(size=20)),
     xaxis_title=dict(text="Date", font=dict(size=14)),
     yaxis_title=dict(text=clean_var_name, font=dict(size=14)),
     template="plotly_white",
@@ -99,12 +107,10 @@ fig_weather.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
 
 st.plotly_chart(fig_weather, use_container_width=True)
 
-
 _, middle, _  = st.columns([0.02, 0.7, 0.13], gap="small")
 
 with middle:
     st.slider(label="Slide to select date range", min_value= date(2023, 1, 1), max_value= date(2025, 12, 31), value=(start_date, end_date), key="weather_date_range",format="DD/MM/YYYY")
-
 #============================
 
 st.subheader("Daily Regional Capacity Factor")
