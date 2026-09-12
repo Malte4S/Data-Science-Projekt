@@ -20,9 +20,9 @@ if st.session_state.preset is None:
 elif st.session_state.preset == "Solar":
     st.header("Negative Correlation between Snow Depth and Solar Energy Output")
     st.markdown(
-    "Filtered by summer, autumn and winter, snow depth has a strong negative correlation with solar energy utilization across both regions. This can be explained by the solar panels being physically impeded by a layer of snow, and that snow is correlated with less shortwave radiation in general.  "
-    "\nThe interesting aspect of this correlation is the steep drop off to zero, which resembles asymptotic decay. One can also see how starting at a certain depth, there's actually an upwards trend again, at different point in both regions; Hovering over the relevant values reveals that these values are concentrated around January and February, where solar activity increases again. This implies that snow might be a secondary driver here, as it directly correlates with a decrease in solar activity.  "
-    "\nFiltered by just spring, where solar activity picks up again, one can see a much more gradual decline."
+    "Both regions exhibit an almost equally strong positive correlation with maximum temperature, likely due to it's direct correlation with solar activity, and the amount of shortwave radiation hitting the solar panels.  "
+    "\nThe more interesting aspect reveals itself when you look at the LOWESS line; instead of a linear relationship, this showcases the asymptotic relationship of solar panels and temperature: The ideal temperature for solar panels is 25C, above that they lose a fraction of their efficiency for each single degree Celsius increase, which is clearly visible with the south. "
+    "\nOne should note that this only measures the outside temperature, therefore the solar panels themselves would likely be much hotter well before 25C ambient temperature, which is likely why the north, which has a lower baseline temperature, already experiences these affects at lower temperatures as well."    
     )
 elif st.session_state.preset == "Wind":
     st.header("Linear Growth of Turbine Output in Relation to Wind Speed")
@@ -44,11 +44,10 @@ elif st.session_state.preset == "Bioenergy":
     )
 
 preset_dict = {
-    "Spring": ("Spearman", "Solar", "Snow_Depth", ["Spring"], "Solar"),
+    "Solar": ("Spearman", "Solar", "Temperature_2M_Max", ["Spring", "Summer", "Autumn", "Winter"], "Solar"),
     "Wind": ("Pearson", "Wind", "Wind_Speed_100M",["Spring", "Summer", "Autumn", "Winter"], "Wind"),
-    "Wind Speed": ("Spearman", "Hydro", "Wind_Speed_100M",["Winter"], "Wind"),
     "Bioenergy": ("Spearman", "Bioenergy", "Apparent_Temperature_Min", ["Spring", "Summer", "Autumn", "Winter"], "Bioenergy"),
-    "Rest of the Year": ("Spearman", "Solar", "Snow_Depth", ["Summer", "Autumn", "Winter"], "Solar"),
+    "Wind Speed": ("Spearman", "Hydro", "Wind_Speed_100M",["Winter"], "Wind"),
     "Precipitation": ("Spearman", "Hydro", "Precipitation_Sum",["Winter"], "Hydro")
 }
 
@@ -56,10 +55,7 @@ presets = st.segmented_control("Select a Preset", ["Solar", "Wind", "Hydro", "Bi
 
 
 if presets is not None:
-    if presets == "Solar":
-        options = st.segmented_control("Select a Preset", ["Spring","Rest of the Year"], selection_mode="single", required=True, default= "Spring")
-        method, tech, weather, seasons, location = preset_dict[options]
-    elif presets == "Hydro":
+    if presets == "Hydro":
         options = st.segmented_control("Select a Preset", ["Wind Speed","Precipitation"], selection_mode="single", required=True, default= "Wind Speed")
         method, tech, weather, seasons, location= preset_dict[options]
     else:
