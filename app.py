@@ -5,7 +5,7 @@ q1 = st.Page("research_questions/question_1.py", title="1. Heatwave effect on so
 q2 = st.Page("research_questions/question_4.py", title="2. Drought and Hydro Energy Production")
 q3 = st.Page("research_questions/question_5.py", title="3. Wind Resource & Performance Analysis")
 q4 = st.Page("research_questions/question_2.py", title="4. Power Generation & Power Trade Share Volatility")
-q5 = st.Page("research_questions/question_6.py", title="5. Bidding Zone Price Volatility")
+q5 = st.Page("research_questions/RQ_PriceVolatility.py", title="5. Bidding Zone Price Volatility")
 q6 = st.Page("research_questions/question_3.py", title="6. Northern vs. Southern Europe")
 imprint = st.Page("other_pages/imprint.py", title="Imprint")
 
