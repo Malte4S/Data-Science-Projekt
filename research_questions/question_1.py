@@ -1,5 +1,4 @@
-#AI-assisted code:
-#Debugged with Claude
+#AI-Assistance: Debugged with Claude
 
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -17,13 +16,13 @@ def load():
     df = pd.read_csv("data/Q1_Data/panel_daily.csv", index_col=0, parse_dates=True)
     df = df.rename(columns={"Hydro Run-of-River": ROR,
                             "Hydro water reservoir": RES})
-    return df[df.index.month.isin([6, 7, 8, 9])]
+    return df[df.index.month.isin([6, 7, 8, 9])] #only return summer months.
 
 
-def heatwaves(df, percentile): #days above a heat percentile in july/august (at least 3 days in row!)
+def heatwaves(df, percentile): #threshold is from july/August but applied to every summer day to always measure against peak summer heat.
     thr = df[df.index.month.isin([7, 8])]["temperature_2m_max"].quantile(percentile)
     hot = df["temperature_2m_max"] >= thr
-    return thr, hot & (hot.groupby((hot != hot.shift()).cumsum()).transform("size") >= 3)
+    return thr, hot & (hot.groupby((hot != hot.shift()).cumsum()).transform("size") >= 3) #heatwave is at least 3 days of the temperature being above the threshold.
 
 
 df = load()
@@ -72,7 +71,7 @@ ja = df[df.index.month.isin([7, 8])]
 _, hw_ja = heatwaves(df, 0.85)
 hw_ja = hw_ja[hw_ja.index.month.isin([7, 8])]
 
-rel = ja[TECHS] / ja.groupby(ja.index.year)[TECHS].transform("mean")
+rel = ja[TECHS] / ja.groupby(ja.index.year)[TECHS].transform("mean") #divide each day by its own year mean to remove capacity growth trend.
 diff = 100 * (rel[hw_ja].mean() / rel[~hw_ja].mean() - 1)
 
 fig, ax = plt.subplots(figsize=(8, 3.5))
@@ -123,7 +122,6 @@ slope, intercept = np.polyfit(x, y, 1)
 resid = y - (slope * x + intercept)
 se = np.sqrt((resid @ resid) / (n - 2) / ((x - x.mean()) ** 2).sum())
 ci = 1.96 * se
-r = np.corrcoef(x, y)[0, 1]
 
 st.caption(f"{first}–{last} · {tmin:.1f}–{tmax:.1f} °C · {n} days · "
            f"{int(m_hw.sum())} of them heatwave days")
