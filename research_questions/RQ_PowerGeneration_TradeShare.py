@@ -1,16 +1,23 @@
+# Imports
+
 import streamlit as st
 import pandas as pd
 import time as t
 import matplotlib.pyplot as plt
 import numpy as np
 
+# Main Title and Research Question
+
 st.set_page_config(
-    page_title="Power Generation Volatility and Power Trade Share Volatility",
-    layout="wide"
+    page_title  = "Power Generation Volatility and Power Trade Share Volatility",
+    layout      = "wide"
 )
+
 st.title("Power Generation Volatility and Power Trade Share Volatility")
 st.write("Question: Has the growing share of weather-dependent renewable energy increased the volatility of national electricity generation during extreme weather events, \
          and to what extent do cross-border electricity imports mitigate this differently across countries?")
+
+# Explainaitions for Metrics that are used in the visuals
 
 st.subheader("Key metrics")
 st.write("__Generation Volatility:__ The Generation Volatility decribes how much the Generation changes within a weather event period. Its Calculated as follows:")
@@ -20,7 +27,7 @@ st.write("__Trading Volatility:__ The Trading Volatility decribes how much the a
 st.latex(r'''\frac{\text{Standard deviation of the amount traded}}{\text{Mean of the amount trade}} \cdot 100''')
 st.write("__Change in Trading Volatility:__ Describes how the Trading Volatiltiy of an extreme weather event differs from the Trading Volatility of 'normal' day.")
 
-# Translation Dictionaries for converting values into more readable data later
+# Translation-dictionaries for converting values into more readable data later
 
 event_names = {
     "high_heat": "Heatwave"
@@ -50,6 +57,17 @@ generation_share= {
     ,"All Renewable Power types" : "total_generation_cv_mean_delta"
 }
 
+# Imports and applying translation dictionaries
+
+# For Visual 1
+df_installed = pd.read_csv("./data/PowerGeneration_TradeShare_Data/installed_generation.csv")
+df_installed["country_name"] = df_installed["country"].map(country_names)
+
+# For Visual 2 and 3
+df_generation = pd.read_csv("./data/PowerGeneration_TradeShare_Data/Generation_data.csv")
+df_generation["event_name"] = df_generation["event_type"].map(event_names)
+df_generation["country_name"] = df_generation["country"].map(country_names)
+
 #-----------------------------------------------------------
 # Visual 1
 #-----------------------------------------------------------
@@ -61,8 +79,7 @@ st.subheader("Installed Generation Share per Country.")
 st.write("In this visual we can see the develoment of the Installed Power in GigaWatts over the years. This should give you an idea about the actual fokus of the selected countries and help putting the \
          following information into context.")
 
-df_installed = pd.read_csv("./data/Q2_Data/installed_generation.csv")
-df_installed["country_name"] = df_installed["country"].map(country_names)
+# Building the Selector for country and apply filter
 
 country = df_installed["country_name"].unique()
 
@@ -73,6 +90,8 @@ selected_country = st.selectbox(
 
 df_installed_filtered = df_installed[df_installed["country_name"] == selected_country]
 
+# Build the Stacked Area plot to show change of each power type
+
 fig1, ax1 = plt.subplots(figsize=(10, 6))
 
 df_installed_filtered.plot.area(
@@ -81,8 +100,10 @@ df_installed_filtered.plot.area(
     ,stacked    = True
     ,figsize    = (12, 6)
     ,alpha      = 0.7
-    ,ax=ax1
+    ,ax         = ax1
 )
+
+# Labels, sizes and legend
 
 ax1.legend(
     title           = "Power Type"
@@ -90,6 +111,14 @@ ax1.legend(
     ,title_fontsize = 15
     ,bbox_to_anchor = (1, 1)
     ,loc            = "upper left"
+)
+
+ax1.grid(
+    visible     = True
+    ,axis       = "both"
+    ,linestyle  = "--"
+    ,linewidth  = 0.6
+    ,alpha      = 0.7
 )
 
 ax1.set_title(f"Energy production in {selected_country}")
@@ -103,16 +132,15 @@ st.pyplot(fig1)
 # Visual 2
 #-----------------------------------------------------------
 
+# Title and Explainaitions
+
 st.subheader("Change in Generation Volatility against Renewable Share for each Weather Event and Technology Type.")
 
 st.write("To answer the Research Question we have to take a look at the Change in Generation Volatility in relation to a 'normal' weather day in comparison to the actually installed Renewable Share. The renewable share autmatically adjusts \
          the Generation Volatility to the appropirat technology. We can see that especially wind and solar power react with a lower volatiltiy to a low wind/solar event. The effect seems to be dampend when the share of the given technology is rather small.\
          Heatwaves on the other hand seem to have an increasing effect when it comes to solar power as one might expect. Especially in countries with a high share in solar power are effected here.")
 
-df_generation = pd.read_csv("./data/Q2_Data/Generation_data.csv")
-
-df_generation["event_name"] = df_generation["event_type"].map(event_names)
-df_generation["country_name"] = df_generation["country"].map(country_names)
+# Building Selectors for Weather event and Power type and apply filters
 
 event_type = df_generation["event_name"].unique()
 
@@ -125,44 +153,40 @@ selected_event2 = st.selectbox(
 
 selected_share2 = st.selectbox(
     "Select renewable share type:"
-    ,options = ["Solar Power", "Wind Power", "Water Power", "All Renewable Power types"]
-    ,key="share_filter_plot2"
+    ,options    = ["Solar Power", "Wind Power", "Water Power", "All Renewable Power types"]
+    ,key        = "share_filter_plot2"
 )   
 
 df_generation_filtered = df_generation[(df_generation["event_name"] == selected_event2)]
 
+# Build the scatter Plot for each country
+
 fig2, ax2 = plt.subplots(figsize=(10, 6))
 
-# Ein Scatter pro Land
+# One Scatter per country, LLM used to figure out how to do multiplle scatter plots in one
 for country, group in df_generation_filtered.groupby("country"):
     ax2.scatter(
-        group[share_type[selected_share2]],
-        group[generation_share[selected_share2]],
-        label   = country_names[country],
-        alpha   = 0.7,
-        s       = 50
+        x       = group[share_type[selected_share2]]
+        ,y      = group[generation_share[selected_share2]]
+        ,label  = country_names[country]
+        ,alpha  = 0.7
+        ,s      = 50
     )
 
-# Null-Linie
+# Labels, sizes legend, etc
+
 ax2.axhline(
-    0
-    ,color       = "grey"
-    ,linestyle   = "--"
-    ,linewidth   = 1
+    visible     = 0
+    ,color      = "grey"
+    ,linestyle  = "--"
+    ,linewidth  = 1
 )
 
 ax2.axvline(
-    0
-    ,color       = "grey"
-    ,linestyle   = "--"
-    ,linewidth   = 1
-)
-
-ax2.set_xlabel(f"Installed Share - {selected_share2} (%)", fontsize=14)
-ax2.set_ylabel(f"Change in Generation Volatility - {selected_share2} (%)", fontsize=14)
-ax2.set_title(
-    f"Change in Generation Volatility during {selected_event2} period"
-    , fontsize = 14
+    visible     = 0
+    ,color      = "grey"
+    ,linestyle  = "--"
+    ,linewidth  = 1
 )
 
 ax2.tick_params(
@@ -170,11 +194,11 @@ ax2.tick_params(
     ,labelsize  = 14)
 
 ax2.grid(
-    True
-    ,axis        = "both"
-    ,linestyle   = "--"
-    ,linewidth   = 0.6
-    ,alpha       = 0.7
+    visible     = True
+    ,axis       = "both"
+    ,linestyle  = "--"
+    ,linewidth  = 0.6
+    ,alpha      = 0.7
 )
 
 ax2.legend(
@@ -185,12 +209,21 @@ ax2.legend(
     ,loc            = "upper left"
 )
 
+ax2.set_xlabel(f"Installed Share - {selected_share2} (%)", fontsize=14)
+ax2.set_ylabel(f"Change in Generation Volatility - {selected_share2} (%)", fontsize=14)
+ax2.set_title(
+    f"Change in Generation Volatility during {selected_event2} period"
+    ,fontsize = 14
+)
+
 plt.tight_layout()
 st.pyplot(fig2)
 
 #-----------------------------------------------------------
 # Visual 3
 #-----------------------------------------------------------
+
+# Title and Explainaitions
 
 st.subheader("Change in Trade Share against the Change in Generation Volatility for each Weather Event.")
 
@@ -199,6 +232,8 @@ st.write("In this last visual we can see the Change in trading share volatility 
         Volatility in comparison to a 'normal' day drop, meaning that with the solar output becoming more stable (due to less being produced) the trading share becomes mroe stabel too. This makes sense since there is not as mcuh power to \
         trade in this situation thus there are not many chances to trade a lot of power. Similar trends can be observed for other technology types as well as, with water power being the exception, probably due to its small share in the total \
         power production for all countries.")
+
+# Building Selectors for Weather event and Power type and apply filters
 
 selected_event3 = st.selectbox(
     "Select weather event type:"
@@ -209,65 +244,67 @@ selected_event3 = st.selectbox(
 
 selected_share3 = st.selectbox(
     "Select share type:"
-    ,options =  ["Solar Power", "Wind Power", "Water Power", "All Renewable Power types"]
-    ,key="share_filter_plot3"
+    ,options    =  ["Solar Power", "Wind Power", "Water Power", "All Renewable Power types"]
+    ,key        = "share_filter_plot3"
 )   
 
 df_trade_filtered = df_generation[df_generation["event_name"] == selected_event3]
 
+# Build the scatter Plot for each country
+
 fig3, ax3 = plt.subplots(figsize=(10, 6))
 
-# Ein Scatter pro Land
+# One Scatter per country, LLM used to figure out how to do multiplle scatter plots in one
 for country, group in df_trade_filtered.groupby("country"):
     ax3.scatter(
-        group[generation_share[selected_share3]],
-        group["traiding_share_delta"],
-        label=country_names[country],
-        alpha=0.7,
-        s=50
+        x       = group[generation_share[selected_share3]]
+        ,y      = group["traiding_share_delta"]
+        ,label  = country_names[country]
+        ,alpha  = 0.7
+        ,s      = 50
     )
-    
 
-# Null-Linien
+# Labels, sizes legend, etc
+
 ax3.axhline(
-    0,
-    color="grey",
-    linestyle="--",
-    linewidth=1
+    y           = 0
+    ,color      = "grey"
+    ,linestyle  = "--"
+    ,linewidth  = 1
 )
 
 ax3.axvline(
-    0,
-    color="grey",
-    linestyle="--",
-    linewidth=1
+    x           = 0
+    ,color      = "grey"
+    ,linestyle  = "--"
+    ,linewidth  = 1
+)
+
+ax3.tick_params(
+    axis        = "both"
+    ,labelsize  = 14)
+
+ax3.grid(
+    visible     = True
+    ,axis       = "both"
+    ,linestyle  = "--"
+    ,linewidth  = 0.6
+    ,alpha      = 0.7
+)
+
+ax3.legend(
+    title           = "Country"
+    ,fontsize       = 14
+    ,title_fontsize = 15
+    ,bbox_to_anchor = (1, 1)
+    ,loc            = "upper left"
 )
 
 ax3.set_xlabel(f"Change in Generation Volatility - {selected_share3} (%)", fontsize=14)
 ax3.set_ylabel("Change in Traiding Share (%)", fontsize=14)
 ax3.set_title(
     f"Cross-Border Trade Response during {selected_event3} period"
-    , fontsize=14
-)
-
-ax3.tick_params(
-    axis="both"
-    ,labelsize=14)
-
-ax3.grid(
-    True,
-    axis="both",
-    linestyle="--",
-    linewidth=0.6,
-    alpha=0.7
-)
-
-ax3.legend(
-    title="Country"
-    ,fontsize=14
-    ,title_fontsize=15
-    ,bbox_to_anchor=(1, 1)
-    ,loc="upper left"
+    ,fontsize = 14
 )
 
 plt.tight_layout()
