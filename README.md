@@ -72,7 +72,7 @@ Used for worldwide energy data in the timeframe 2005-2023 for RQ2.
 Provides RQ2 with a crucial parameter: spei\_12, is an indicator for drought.
 
 **Global Energy Monitor:**
-Used for worldwide energy data
+Provides spatial, operating and capacity data for individual renewable energy plants, which was crucial for RQ6. Due to its messy nature it had to be manually cleaned via Excel filtering and sorting, all of which is documented in the pipeline documentation.
 
 
 
@@ -82,9 +82,9 @@ Used for worldwide energy data
 
 **RQ2 and RQ3:** The folders 'Drought - Pipeline' and 'Wind-Pipeline' each contain a notebook and the resulting CSV files from it.
 
-**RQ4 and RQ5**: The Transformation Notebooks for these questions can be found in the folders “Transformation - Generation Volatility” and “Transformation - Price Volatility”. In these notebooks, the raw data was filtered to the required timeframes and enriched by calculating additional variables necessary for the analyses. This includes identifying extreme weather event days and calculating relevant values for electricity generation, cross-border trade, and prices. During the transformation process, normalized values were used to make comparability between countries easier. The resulting datasets were then exported and used as the final data sources for the website.
+**RQ4 and RQ5:** The Transformation Notebooks for these questions can be found in the folders “Transformation - Generation Volatility” and “Transformation - Price Volatility”. In these notebooks, the raw data was filtered to the required timeframes and enriched by calculating additional variables necessary for the analyses. This includes identifying extreme weather event days and calculating relevant values for electricity generation, cross-border trade, and prices. During the transformation process, normalized values were used to make comparability between countries easier. The resulting datasets were then exported and used as the final data sources for the website.
 
-**RQ6:**
+**RQ6:** The Jupyter Notebook detailing the whole pipeline can be found in the “Weather Conditions North and South - Pipeline” directory. Alongside this, the original GEM trackers that were used are included, as well as the manually cleaned ones. The output data can be found in the corresponding “data” folder, all of which is used for the main visualization.
 
 
 
