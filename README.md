@@ -7,12 +7,17 @@ The world we live in is increasingly shifting towards weather-dependent, renewab
 We explore this across six research questions, covering drought and hydropower, wind performance, and the volatility of power generation, trade, and prices across different European bidding zones: 
 
 
-**RQ1:** How does a Heatwave affect Solar and Hydro Generation in Spain between 2015 and 2024? \
-**RQ2:** In drought years, do countries with high hydro dependency show an increase in fossil fuel backup generation compared to countries with a diversified energy mix? \
-**RQ3:** Do countries with higher average wind speeds generate proportionally more electricity per installed wind turbine capacity than countries with lower wind speeds, and which countries over or underperform relative to their wind potential? \
-**RQ4:** Has the growing share of weather-dependent renewable energy increased the volatility of national electricity generation during extreme weather events, and to what extent are cross-border trades effected? \
-**RQ5:** To what extent do countries with a higher share of renewables in their energy mix show greater electricity price volatility during extreme weather events compared to countries with a fossil-fuel-dominated mix? \
-**RQ6:** How is renewable electricity generation associated with regional meteorological conditions between northern and southern European countries?​ \
+**RQ1:** How does a Heatwave affect Solar and Hydro Generation in Spain between 2015 and 2024? 
+
+**RQ2:** In drought years, do countries with high hydro dependency show an increase in fossil fuel backup generation compared to countries with a diversified energy mix? 
+
+**RQ3:** Do countries with higher average wind speeds generate proportionally more electricity per installed wind turbine capacity than countries with lower wind speeds, and which countries over or underperform relative to their wind potential? 
+
+**RQ4:** Has the growing share of weather-dependent renewable energy increased the volatility of national electricity generation during extreme weather events, and to what extent are cross-border trades effected? 
+
+**RQ5:** To what extent do countries with a higher share of renewables in their energy mix show greater electricity price volatility during extreme weather events compared to countries with a fossil-fuel-dominated mix? 
+
+**RQ6:** How is renewable electricity generation associated with regional meteorological conditions between northern and southern European countries?​ 
 
 
 # Datasources
