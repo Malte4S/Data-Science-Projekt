@@ -14,8 +14,25 @@ st.set_page_config(
     layout="wide"
 )
 
+DATA_PATH = "./data/Drought_data/drought_energy_clean.csv"
+
+# SPEI-12 cut-off below which a year counts as a drought year
+# (McKee et al., 1993).
+DROUGHT_THRESHOLD = -1.0
+
+# Fixed hydro-dependency split used for the group comparison (Visual 2)
+# and the time-series marker (Visual 3). 
+FIXED_HYDRO_THRESHOLD = 40  # percent
+LABEL_DIVERSIFIED = "Diversified"
+LABEL_HIGH_HYDRO = "High Hydro Dependency"
+LABEL_HIGH_HYDRO_FIXED = f"{LABEL_HIGH_HYDRO} (>= {FIXED_HYDRO_THRESHOLD}%)"
+
 st.title("Drought and Hydro Energy Production")
-st.write("Question: In drought years, do countries with high hydro dependency show an increase in fossil fuel backup generation compared to countries with a diversified energy mix?")
+st.write(
+    "Question: In drought years, do countries with high hydro dependency "
+    "show an increase in fossil fuel backup generation compared to "
+    "countries with a diversified energy mix?"
+)
 
 st.write(
     "For this analysis we use 14 countries (AUT, BRA, CAN, CHE, DEU, ESP, FRA "
@@ -24,14 +41,22 @@ st.write(
     "full period is at or above a chosen threshold (40% by default, adjustable "
     "in the first chart below), and 'Diversified' otherwise. A drought year is "
     "defined using the SPEI-12 (12-month Standardised Precipitation-Evapotranspiration "
-    "Index). A year counts as a drought year when SPEI-12 falls below -1.0 " 
+    "Index). A year counts as a drought year when SPEI-12 falls below "
+    f"{DROUGHT_THRESHOLD}. "
     "This threshold follows the standard drought classification used in climate "
     "research (McKee et al., 1993), where SPEI values between 0 and -0.99 are "
     "considered near normal, -1.0 to -1.49 moderately dry, -1.5 to -1.99 severely "
     "dry, and values at or below -2.0 extremely dry. "
 )
 
-df = pd.read_csv("./data/Q4_Data/drought_energy_clean.csv")
+df = pd.read_csv(DATA_PATH)
+
+# Mean hydro share per country 
+mean_hydro_share_by_country = df.groupby("country")["hydro_share"].mean() * 100
+
+# -----------------------------------------------------------
+# Visual 1
+# -----------------------------------------------------------
 
 st.subheader("Bubble Chart")
 st.markdown(
@@ -47,14 +72,13 @@ threshold = st.slider(
     "'Diversified'",
     min_value=10,
     max_value=80,
-    value=40,
+    value=FIXED_HYDRO_THRESHOLD,
     step=5,
 )
 
 agg = (
     df.groupby("country")
     .agg(
-        mean_hydro_share=("hydro_share", "mean"),
         mean_fossil_share=("fossil_share", "mean"),
         n_drought_years=("drought", "sum"),
         n_years=("year", "count"),
@@ -62,21 +86,31 @@ agg = (
     .reset_index()
 )
 
-agg["mean_hydro_share_pct"] = agg["mean_hydro_share"] * 100
+agg["mean_hydro_share_pct"] = agg["country"].map(mean_hydro_share_by_country)
 agg["mean_fossil_share_pct"] = agg["mean_fossil_share"] * 100
 
 agg["group"] = agg["mean_hydro_share_pct"].apply(
-    lambda x: "High Hydro Dependency" if x >= threshold else "Diversified"
+    lambda x: LABEL_HIGH_HYDRO if x >= threshold else LABEL_DIVERSIFIED
 )
 
 BASE_SIZE = 14
 SIZE_PER_DROUGHT_YEAR = 4
+NORWAY_SIZE_DIVISOR = 2
 
-def bubble_size(row):
+
+def bubble_size(row: pd.Series) -> float:
+    """Return the marker size for one country's bubble.
+
+    Size scales linearly with the number of drought years so that
+    countries with more drought years stand out. Norway had zero
+    drought years, which would make its bubble non-visible. Its size is therefore
+    halved from the "no drought years" baseline.
+    """
     size = BASE_SIZE + row["n_drought_years"] * SIZE_PER_DROUGHT_YEAR
     if row["country"] == "Norway":
-        size = size / 2
+        size = size / NORWAY_SIZE_DIVISOR
     return size
+
 
 agg["bubble_size"] = agg.apply(bubble_size, axis=1)
 
@@ -97,8 +131,8 @@ fig = px.scatter(
         "group": True,
     },
     color_discrete_map={
-        "High Hydro Dependency": "#1f77b4",
-        "Diversified": "#ff7f0e",
+        LABEL_HIGH_HYDRO: "#1f77b4",
+        LABEL_DIVERSIFIED: "#ff7f0e",
     },
     labels={
         "mean_hydro_share_pct": "Mean hydro share (%, overall)",
@@ -142,32 +176,31 @@ st.caption(
     "experienced. Norway had no drought years, so its bubble size is halved to make it visible."
 )
 
+# -----------------------------------------------------------
+# Visual 2
+# -----------------------------------------------------------
 
-# bar chart: drought vs. non-drought years, by hydro dependency group
 st.title("Fossil Backup Generation")
 st.subheader("Drought vs. Non-Drought Years by Hydro-Dependency Group")
 st.markdown(
     "Next we wanted to isolate the actual effect we are testing: does fossil "
     "fuel generation increase specifically in drought years, and does that "
     "increase look different for hydro-dependent countries compared to "
-    "diversified ones? Here we fix the hydro dependency split at the 40% "
-    "threshold and compare the mean fossil fuel share of generation across "
-    "four groups: diversified countries in normal years, diversified "
-    "countries in drought years, high-hydro-dependency countries in normal "
-    "years, and high-hydro-dependency countries in drought years. If our "
-    "hypothesis holds, the increase from normal to drought years should be "
-    "larger for the High Hydro Dependency group than for the Diversified "
-    "group."
+    "diversified ones? Here we fix the hydro dependency split at the "
+    f"{FIXED_HYDRO_THRESHOLD}% threshold and compare the mean fossil fuel "
+    "share of generation across four groups: diversified countries in normal "
+    "years, diversified countries in drought years, high-hydro-dependency "
+    "countries in normal years, and high-hydro-dependency countries in "
+    "drought years. If our hypothesis holds, the increase from normal to "
+    "drought years should be larger for the High Hydro Dependency group than "
+    "for the Diversified group."
 )
 
 df["fossil_pct"] = df["fossil_share"] * 100
 
-hydro_mean = df.groupby("country")["hydro_share"].mean() * 100
-
-group_map = hydro_mean.apply(
-    lambda x: "High Hydro Dependency (>= 40%)"
-    if x >= 40
-    else "Diversified"
+# table below stays stable regardless of what the slider is set to.
+group_map = mean_hydro_share_by_country.apply(
+    lambda x: LABEL_HIGH_HYDRO_FIXED if x >= FIXED_HYDRO_THRESHOLD else LABEL_DIVERSIFIED
 )
 
 df["group"] = df["country"].map(group_map)
@@ -202,15 +235,10 @@ st.dataframe(
     hide_index=True
 )
 
-groups = [
-    "Diversified",
-    "High Hydro Dependency (>= 40%)"
-]
-
-conditions = [
-    "Non-Drought",
-    "Drought"
-]
+# Fixed order (rather than summary["group"].unique(), whose order is not
+# guaranteed) so the bars always appear as Diversified, then High Hydro.
+groups = [LABEL_DIVERSIFIED, LABEL_HIGH_HYDRO_FIXED]
+conditions = ["Non-Drought", "Drought"]
 
 colors = {
     "Non-Drought": "#9fb8c9",
@@ -303,14 +331,21 @@ st.pyplot(
     use_container_width=True
 )
 
+# -----------------------------------------------------------
+# Visual 3
+# -----------------------------------------------------------
 
-# time series chart: year-by-year fossil and hydro share, with drought shading
 HYDRO_COLOR = "#1F6F8B"
 FOSSIL_COLOR = "#B5562E"
 DROUGHT_BAND_COLOR = "rgba(217, 199, 154, 0.55)"
-DROUGHT_THRESHOLD = -1.0
 
-def drought_bands(rows):
+
+def drought_bands(rows: pd.DataFrame) -> list[tuple[int, int]]:
+    """Collapse consecutive drought years into (start_year, end_year) spans.
+
+    rows must be sorted by year and contain a boolean "drought" and an
+    integer "year" column.
+    """
     bands = []
     start = None
     prev_year = None
@@ -326,8 +361,11 @@ def drought_bands(rows):
         bands.append((start, prev_year))
     return bands
 
-def pct(x):
+
+def pct(x: float) -> str:
+    """Format a fractional share (e.g. 0.42) as a percentage string."""
     return f"{x * 100:.1f}%"
+
 
 st.title("Where Does the Electricity Come From When Drought Hits?")
 st.subheader("Time Series by Country")
@@ -337,17 +375,19 @@ st.markdown(
     "cannot show whether a country's response changed over time or was "
     "driven by one particularly bad drought. Here you can pick any country "
     "and see its hydro and fossil fuel share plotted year by year from "
-    "2005-2023, with drought years (SPEI-12 < -1.0) shaded in the "
-    "background. This makes it possible to check, for a specific country, "
-    "whether fossil share visibly rises during the shaded drought periods, "
-    "and whether that pattern looks different for hydro-heavy countries "
-    "(marked with a ~) compared to diversified ones."
+    "2005-2023, with drought years (SPEI-12 < "
+    f"{DROUGHT_THRESHOLD}) shaded in the background. This makes it possible "
+    "to check, for a specific country, whether fossil share visibly rises "
+    "during the shaded drought periods, and whether that pattern looks "
+    "different for hydro-heavy countries (marked with a ~) compared to "
+    "diversified ones."
 )
 
 countries = sorted(df["country"].unique())
 
-mean_hydro_by_country = df.groupby("country")["hydro_share"].mean()
-hydro_heavy = set(mean_hydro_by_country[mean_hydro_by_country >= 0.40].index)
+hydro_heavy = set(
+    mean_hydro_share_by_country[mean_hydro_share_by_country >= FIXED_HYDRO_THRESHOLD].index
+)
 
 default_index = countries.index("Norway") if "Norway" in countries else 0
 country_selected = st.selectbox(
@@ -357,7 +397,7 @@ country_selected = st.selectbox(
     format_func=lambda c: f"{c} ~" if c in hydro_heavy else c,
     key="timeseries_country_select",
 )
-st.caption("~ = hydro plays a larger role here (>= 40% mean share)")
+st.caption(f"~ = hydro plays a larger role here (>= {FIXED_HYDRO_THRESHOLD}% mean share)")
 
 rows = df[df["country"] == country_selected].sort_values("year").reset_index(drop=True)
 bands = drought_bands(rows)

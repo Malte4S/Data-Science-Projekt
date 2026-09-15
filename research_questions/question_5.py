@@ -1,8 +1,5 @@
-#AI-assisted code
-#Debugged with Claude
-#Used for text
-#Adapted by authors
-
+# AI-assisted code
+# Debugged with Claude
 
 import numpy as np
 import pandas as pd
@@ -14,10 +11,11 @@ from scipy import stats
 
 st.set_page_config(page_title="Wind", layout="wide")
 
+DATA_PATH = "./data/Wind_Data/wind.csv"
 COLOR_OVER = "#1f77b4"
 COLOR_UNDER = "#d62728"
 
-st.title(" Wind Resource & Performance Analysis")
+st.title("Wind Resource & Performance Analysis")
 
 st.markdown(
     """
@@ -27,7 +25,7 @@ over- or underperform relative to their raw wind potential?
 """
 )
 
-df = pd.read_csv("./data/Q5_Data/wind.csv")
+df = pd.read_csv(DATA_PATH)
 
 st.subheader("Key metrics")
 
@@ -61,15 +59,17 @@ st.markdown(
     "(e.g. older turbine fleet, grid curtailment, regulatory constraints)."
 )
 
-"""
-Example Performance score
-"""
+# -----------------------------------------------------------
+# performance score calculation
+# -----------------------------------------------------------
+
 reg_data = df.dropna(subset=["wind_speed_100m_mean_ms", "capacity_factor_pct"])
 
 slope, intercept, r_value, p_value, std_err = stats.linregress(
     reg_data["wind_speed_100m_mean_ms"],
     reg_data["capacity_factor_pct"],
 )
+r_squared = r_value ** 2
 
 df["expected_capacity_factor"] = intercept + slope * df["wind_speed_100m_mean_ms"]
 df["performance_score"] = df["capacity_factor_pct"] - df["expected_capacity_factor"]
@@ -77,16 +77,12 @@ df["performance_score"] = df["capacity_factor_pct"] - df["expected_capacity_fact
 top_over = df.loc[df["performance_score"].idxmax()]
 top_under = df.loc[df["performance_score"].idxmin()]
 
-st.markdown(
-    f"""
-**example:**
-"""
-)
+st.markdown("#### Example: performance score calculation")
 st.latex(r"\text{Expected CF} = \text{intercept} + \text{slope} \times \text{wind speed}")
 st.markdown(
     f"""
 The intercept ({intercept:.1f}) and slope ({slope:.2f}) come directly from fitting the
-regression line through all {len(reg_data)} countries. 
+regression line through all {len(reg_data)} countries (R² = {r_squared:.2f}, p = {p_value:.3g}).
 
 **{top_over['country']}** has a mean wind speed of {top_over['wind_speed_100m_mean_ms']:.1f} m/s,
 so its expected capacity factor is {intercept:.1f} + {slope:.2f} × {top_over['wind_speed_100m_mean_ms']:.1f}
@@ -103,15 +99,17 @@ so its expected capacity factor is {intercept:.1f} + {slope:.2f} × {top_over['w
 """
 )
 
-# exeample
-top_over = df.loc[df["country"] == "Italy"].iloc[0]
-top_under = df.loc[df["country"] == "Argentina"].iloc[0]
+# -----------------------------------------------------------
+#  performance score plot
+# -----------------------------------------------------------
+# Uses two fixed, hand-picked countries (rather than the true top
+# over-/underperformers above) so the illustration stays the same and easy
+# to talk through regardless of which countries are most extreme in the
+# data.
+plot_example_over = df.loc[df["country"] == "Italy"].iloc[0]
+plot_example_under = df.loc[df["country"] == "Argentina"].iloc[0]
 
-st.markdown(
-    """
-**example:**
-"""
-)
+st.markdown("#### Example: visualizing the performance score (Italy vs. Argentina)")
 
 fig_example, ax_example = plt.subplots(figsize=(5.5, 4))
 
@@ -120,22 +118,22 @@ x_line = np.linspace(reg_data["wind_speed_100m_mean_ms"].min() - 0.5,
 y_line = intercept + slope * x_line
 ax_example.plot(x_line, y_line, color="black", linewidth=1.5, label="Regression line (expected CF)")
 
-ax_example.scatter([top_over["wind_speed_100m_mean_ms"]], [top_over["capacity_factor_pct"]],
+ax_example.scatter([plot_example_over["wind_speed_100m_mean_ms"]], [plot_example_over["capacity_factor_pct"]],
                     color=COLOR_OVER, zorder=3, s=80)
-ax_example.plot([top_over["wind_speed_100m_mean_ms"]] * 2,
-                [top_over["expected_capacity_factor"], top_over["capacity_factor_pct"]],
+ax_example.plot([plot_example_over["wind_speed_100m_mean_ms"]] * 2,
+                [plot_example_over["expected_capacity_factor"], plot_example_over["capacity_factor_pct"]],
                 color=COLOR_OVER, linestyle="--", linewidth=1.2)
-ax_example.annotate(f"{top_over['country']}\n({top_over['performance_score']:+.1f} pp)",
-                     (top_over["wind_speed_100m_mean_ms"], top_over["capacity_factor_pct"]),
+ax_example.annotate(f"{plot_example_over['country']}\n({plot_example_over['performance_score']:+.1f} pp)",
+                     (plot_example_over["wind_speed_100m_mean_ms"], plot_example_over["capacity_factor_pct"]),
                      textcoords="offset points", xytext=(8, 4), fontsize=8, color=COLOR_OVER)
 
-ax_example.scatter([top_under["wind_speed_100m_mean_ms"]], [top_under["capacity_factor_pct"]],
+ax_example.scatter([plot_example_under["wind_speed_100m_mean_ms"]], [plot_example_under["capacity_factor_pct"]],
                     color=COLOR_UNDER, zorder=3, s=80)
-ax_example.plot([top_under["wind_speed_100m_mean_ms"]] * 2,
-                [top_under["expected_capacity_factor"], top_under["capacity_factor_pct"]],
+ax_example.plot([plot_example_under["wind_speed_100m_mean_ms"]] * 2,
+                [plot_example_under["expected_capacity_factor"], plot_example_under["capacity_factor_pct"]],
                 color=COLOR_UNDER, linestyle="--", linewidth=1.2)
-ax_example.annotate(f"{top_under['country']}\n({top_under['performance_score']:+.1f} pp)",
-                     (top_under["wind_speed_100m_mean_ms"], top_under["capacity_factor_pct"]),
+ax_example.annotate(f"{plot_example_under['country']}\n({plot_example_under['performance_score']:+.1f} pp)",
+                     (plot_example_under["wind_speed_100m_mean_ms"], plot_example_under["capacity_factor_pct"]),
                      textcoords="offset points", xytext=(8, -18), fontsize=8, color=COLOR_UNDER)
 
 ax_example.set_xlabel("Mean wind speed (m/s)", fontsize=9)
@@ -148,8 +146,10 @@ plt.tight_layout()
 
 st.pyplot(fig_example)
 
-
+# -----------------------------------------------------------
 # Sidebar controls
+# -----------------------------------------------------------
+
 st.sidebar.header("Map settings")
 
 color_choice = st.sidebar.radio(
@@ -168,7 +168,10 @@ color_col = (
 color_scale = "RdBu" if color_col == "performance_score" else "YlGnBu"
 color_midpoint = 0 if color_col == "performance_score" else None
 
-# Main title
+# -----------------------------------------------------------
+# Visual 1: Global wind resource & performance map
+# -----------------------------------------------------------
+
 st.header("Global Wind Resource & Performance Map")
 st.markdown(
     "We start with a world map because the question is inherently spatial: "
@@ -185,7 +188,6 @@ st.markdown(
     "wind speed, power density, installed capacity, and generation."
 )
 
-# Map: capacity factor or performance score
 fig = px.choropleth(
     df,
     locations="iso_code",
@@ -233,8 +235,10 @@ fig.update_layout(
 
 st.plotly_chart(fig, use_container_width=True)
 
+# -----------------------------------------------------------
+# Visual 2: Ranked performance residuals (lollipop chart)
+# -----------------------------------------------------------
 
-# lollipop chart: over vs. underperformers
 st.header("Ranked Performance Residuals")
 st.markdown(
     "The map shows performance scores geographically, but it makes it hard "
@@ -249,7 +253,6 @@ st.markdown(
     "the dropdowns below to swap in any other country and compare it "
     "directly against these reference cases."
 )
-
 
 df_perf = df.dropna(subset=["performance_score"])
 
@@ -276,10 +279,10 @@ with col_under:
         key="lollipop_underperformers",
     )
 
-selected_countries = selected_over + selected_under
+selected_lollipop_countries = selected_over + selected_under
 
-if selected_countries:
-    df_sorted = df_perf[df_perf["country"].isin(selected_countries)].sort_values(
+if selected_lollipop_countries:
+    df_sorted = df_perf[df_perf["country"].isin(selected_lollipop_countries)].sort_values(
         "performance_score", ascending=True
     ).reset_index(drop=True)
     colors = [COLOR_OVER if v >= 0 else COLOR_UNDER for v in df_sorted["performance_score"]]
@@ -313,8 +316,10 @@ if selected_countries:
 else:
     st.info("Select at least one country in either dropdown to display the chart.")
 
+# -----------------------------------------------------------
+# Visual 3: Multi-metric radar chart
+# -----------------------------------------------------------
 
-# Interactive radar chart: multi-metric country comparison
 st.header("Multi-Metric Country Comparison")
 st.markdown(
     "The map and the ranked chart both focus on a single number, capacity "
@@ -345,30 +350,37 @@ RADAR_METRICS = {
     "Capacity factor (%)": "capacity_factor_pct",
 }
 
+
+def normalize_columns(data: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
+    """Min-max normalize each column in columns to the 0-1 range."""
+    normalized = data[columns].copy()
+    for column in columns:
+        lo, hi = data[column].min(), data[column].max()
+        normalized[column] = (data[column] - lo) / (hi - lo) if hi > lo else 0.5
+    return normalized
+
+
 default_countries = (
     df.sort_values("wind_speed_100m_mean_ms", ascending=False)["country"].head(3).tolist()
 )
 
-selected_countries = st.multiselect(
+selected_radar_countries = st.multiselect(
     "Countries to compare",
     options=sorted(df["country"].unique()),
     default=default_countries,
     key="radar_country_picker",
 )
 
-if selected_countries:
+if selected_radar_countries:
     df_radar = df.copy()
     labels = list(RADAR_METRICS.keys())
     cols = list(RADAR_METRICS.values())
 
-    norm = df_radar[cols].copy()
-    for c in cols:
-        lo, hi = df_radar[c].min(), df_radar[c].max()
-        norm[c] = (df_radar[c] - lo) / (hi - lo) if hi > lo else 0.5
+    norm = normalize_columns(df_radar, cols)
     df_radar[[f"{c}_norm" for c in cols]] = norm
 
     fig_radar = go.Figure()
-    for country in selected_countries:
+    for country in selected_radar_countries:
         row = df_radar[df_radar["country"] == country].iloc[0]
         r_values = [row[f"{c}_norm"] for c in cols] + [row[f"{cols[0]}_norm"]]
         theta_labels = labels + [labels[0]]
@@ -399,8 +411,10 @@ if selected_countries:
 else:
     st.info("Pick at least one country to display the radar chart.")
 
+# -----------------------------------------------------------
+# Supporting data table (sorted by the currently chosen map metric)
+# -----------------------------------------------------------
 
-# Supporting table (sorted by chosen metric)
 with st.expander("Show underlying data table"):
     st.dataframe(
         df[
