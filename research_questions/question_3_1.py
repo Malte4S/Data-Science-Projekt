@@ -24,6 +24,7 @@ display_labels = {
     'Bioenergy': 'Biomass Facilities'
 }
 
+# A collection of segmented buttons used to customize the sandbox visualization
 method = st.segmented_control("Select the Correlation Method", ["Pearson", "Spearman"], selection_mode="single", default="Pearson", required=True)
 tech = st.segmented_control("Select the Technology", ['Solar', 'Wind', 'Hydro', 'Bioenergy'], selection_mode="single", default='Solar', required=True, key="interactive_data")
 weather = st.segmented_control("Select the Weather Variable", ['Shortwave_Radiation_Sum', 'Wind_Speed_100M', 'Wind_Gusts_10M_Max', 'Temperature_2M_Max', 'Apparent_Temperature_Min', 'Precipitation_Sum', 'Snow_Depth'], selection_mode="single", default='Shortwave_Radiation_Sum', required=True)
@@ -137,6 +138,7 @@ for r, r_data in final_df.groupby('Region'):
     
     if method == "Pearson":
         if n_samples >= 3:
+            # Calculate standard linear regression to draw a straight line of best fit
             slope, intercept, _, _, _ = stats.linregress(x, y)
             x_line = np.array([x.min(), x.max()])
             y_line = slope * x_line + intercept
@@ -158,6 +160,7 @@ for r, r_data in final_df.groupby('Region'):
             ))
     elif method == "Spearman":
                 if n_samples >= 4:
+                    # Calculate rank-order correlatio, ideal for non-linear relationships
                     res_s = stats.spearmanr(x, y)
                     rho = res_s.statistic
                     ci_low, ci_high = calculate_spearman_ci(rho, n_samples)
@@ -215,7 +218,6 @@ fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
 fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
 
 st.plotly_chart(fig, use_container_width=True)
-
 
 _, middle, _  = st.columns([0.02, 0.4, 0.5], gap="small")
 
