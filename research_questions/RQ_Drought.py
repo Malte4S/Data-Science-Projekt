@@ -2,6 +2,7 @@
 # Used to help create the interactive parts of the visualization.
 # Bar chart generated with ChatGPT and adapted by the authors.
 
+# impotrs
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -27,6 +28,7 @@ LABEL_DIVERSIFIED = "Diversified"
 LABEL_HIGH_HYDRO = "High Hydro Dependency"
 LABEL_HIGH_HYDRO_FIXED = f"{LABEL_HIGH_HYDRO} (>= {FIXED_HYDRO_THRESHOLD}%)"
 
+# title and description
 st.title("Drought and Hydro Energy Production")
 st.write(
     "Question: In drought years, do countries with high hydro dependency "
@@ -76,6 +78,8 @@ threshold = st.slider(
     step=5,
 )
 
+# Aggregate data by country to compute mean fossil share, 
+# number of drought years, and total number of years
 agg = (
     df.groupby("country")
     .agg(
@@ -114,6 +118,7 @@ def bubble_size(row: pd.Series) -> float:
 
 agg["bubble_size"] = agg.apply(bubble_size, axis=1)
 
+# Create the bubble chart 
 fig = px.scatter(
     agg,
     x="mean_hydro_share_pct",
@@ -455,14 +460,17 @@ st.plotly_chart(fig_ts, use_container_width=True, key="timeseries_chart")
 drought_rows = rows[rows["drought"]]
 normal_rows = rows[~rows["drought"]]
 
+# Compute average shares for drought and normal years
 avg_hydro_drought = drought_rows["hydro_share"].mean() if len(drought_rows) else 0
 avg_hydro_normal = normal_rows["hydro_share"].mean() if len(normal_rows) else 0
 avg_fossil_drought = drought_rows["fossil_share"].mean() if len(drought_rows) else 0
 avg_fossil_normal = normal_rows["fossil_share"].mean() if len(normal_rows) else 0
 
+# Compute deltas for display
 hydro_delta = avg_hydro_drought - avg_hydro_normal
 fossil_delta = avg_fossil_drought - avg_fossil_normal
 
+# Display metrics
 col1, col2 = st.columns(2)
 with col1:
     st.metric(
