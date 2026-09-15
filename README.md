@@ -25,7 +25,7 @@ We explore this across six research questions, covering drought and hydropower, 
 
 
 
-# Datasources
+# Data Sources
 
 The Raw Data was gathered from multiple sources. The main once are:
 
@@ -76,7 +76,7 @@ Provides spatial, operating and capacity data for individual renewable energy pl
 
 
 
-# Datarefinment
+# Data Refinement
 
 **RQ1:** The folder 'Heatwave - Pipeline' contains a Python-File and the resulting CSV file from it.
 
@@ -97,15 +97,15 @@ The website uses the refined datasets that were prepared and tested beforehand. 
 
 
 
-# Websitenavigation
+# Website Navigation
 
 To navigate the website, use the navigation menu on the left. Each research question has its own dedicated page. On each page, you will find explanations, results, and at least three visualizations. These visualizations can be altered using the provided selectors and sliders. Common filters include year, weather event type, country, or generation type, depending on the respective research question.
 
 
 
-# Use of LLM's
+# Use of LLMs
 
-LLM’s were used for multiple purposes in this project:
+LLMs were used for multiple purposes in this project:
 
 * Refinement of Research Questions: During the initial phase of the project, LLM’s were used as a source of inspiration and to refine our research questions to meet the required level of complexity for the course.
 * Explanations and Understanding: During the data refinement and website development processes, we occasionally encountered functions or concepts that we were unfamiliar with, such as specific Streamlit functionalities. LLM’s were used to gain a better understanding of these functions and concepts before using them in the project.
