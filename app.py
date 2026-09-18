@@ -1,7 +1,7 @@
 import streamlit as st
 
 home = st.Page("other_pages/home.py", title="Home")
-q1 = st.Page("research_questions/question_1.py", title="1. Heatwave effect on solar & hydro generation")
+q1 = st.Page("research_questions/RQ_Heatwave.py", title="1. Heatwave effect on solar & hydro generation")
 q2 = st.Page("research_questions/RQ_Drought.py", title="2. Drought and Hydro Energy Production")
 q3 = st.Page("research_questions/RQ_Wind.py", title="3. Wind Resource & Performance Analysis")
 q4 = st.Page("research_questions/RQ_PowerGeneration_TradeShare.py"  , title="4. Power Generation & Power Trade Share Volatility")
