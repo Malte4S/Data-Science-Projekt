@@ -13,7 +13,7 @@ COLOR = {SOL: "goldenrod", ROR: "steelblue", RES: "darkslateblue"}
 
 @st.cache_data
 def load():
-    df = pd.read_csv("data/Q1_Data/panel_daily.csv", index_col=0, parse_dates=True)
+    df = pd.read_csv("data/Heatwave_data/panel_daily.csv", index_col=0, parse_dates=True)
     df = df.rename(columns={"Hydro Run-of-River": ROR,
                             "Hydro water reservoir": RES})
     return df[df.index.month.isin([6, 7, 8, 9])] #only return summer months.
